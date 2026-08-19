@@ -932,3 +932,30 @@ void TestDuchain::test_genericInstantiation()
     QCOMPARE(typeDeclaration->identifier().toString(), QString("List"));
     QVERIFY(!typeDeclaration->internalContext()->findDeclarations(QualifiedIdentifier("items")).isEmpty());
 }
+
+void TestDuchain::test_usesInSecondInitializer()
+{
+    //the declaration pass used to skip every initializer after the first,
+    //so the use pass entered a context that was never created and crashed
+    QString code("package main\n"
+                 "type mytype struct { x int }\n"
+                 "func main() {\n"
+                 "    var a, b = 1, mytype{2}\n"
+                 "    var c, d = mytype{3}, func() { var inner mytype; _ = inner }\n"
+                 "    _, _, _, _ = a, b, c, d\n"
+                 "}");
+    ParseSession session(code.toUtf8(), 0);
+    session.setCurrentDocument(IndexedString("file:///temp/1"));
+    QVERIFY(session.startParsing());
+    DeclarationBuilder builder(&session, false);
+    ReferencedTopDUContext topContext = builder.build(session.currentDocument(), session.ast());
+    QVERIFY(topContext.data());
+    go::UseBuilder useBuilder(&session);
+    useBuilder.buildUses(session.ast()); //used to crash on a null context
+
+    DUChainReadLocker lock;
+    auto* context = getMainContext(getPackageContext(topContext));
+    QVERIFY(context);
+    QVERIFY(!context->findDeclarations(QualifiedIdentifier("b")).isEmpty());
+    QVERIFY(!context->findDeclarations(QualifiedIdentifier("d")).isEmpty());
+}

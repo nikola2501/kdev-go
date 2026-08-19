@@ -60,6 +60,7 @@ private slots:
     void test_genericStructTypeParameters();
     void test_genericMethodReceiver();
     void test_genericInstantiation();
+    void test_usesInSecondInitializer();
 };
 
 

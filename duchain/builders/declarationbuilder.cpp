@@ -137,6 +137,10 @@ void DeclarationBuilder::declareVariables(go::IdentifierAst* id, go::IdListAst* 
         {
             exprVisitor.clearAll();
             exprVisitor.visitExpression(iter->element);
+            //let the builder walk this initializer too, so contexts and
+            //declarations (composite literals, function literals) inside the
+            //second and later expressions exist for the use pass
+            visitExpression(iter->element);
             types.append(firstType(exprVisitor));
             iter = iter->next;
         }

@@ -161,9 +161,20 @@ void ContextBuilder::visitPrimaryExpr(go::PrimaryExprAst *node)
         QualifiedIdentifier id(identifierForNode(node->id));
         if (node->literalValue)
         {
-            openContext(node->id, editorFindRange(node->literalValue, 0), DUContext::Other, id);
-            visitLiteralValue(node->literalValue);
-            closeContext();
+            //outside the declaration pass openContext() blindly enters the
+            //context stored on the AST node; when the declaration pass never
+            //visited this subtree (it skips some expression positions) there
+            //is none, and entering a null context crashes the use builder
+            if (compilingContexts() || contextFromNode(node->id))
+            {
+                openContext(node->id, editorFindRange(node->literalValue, 0), DUContext::Other, id);
+                visitLiteralValue(node->literalValue);
+                closeContext();
+            }
+            else
+            {
+                visitLiteralValue(node->literalValue);
+            }
             return;
         }
         else
@@ -177,9 +188,16 @@ void ContextBuilder::visitPrimaryExpr(go::PrimaryExprAst *node)
                 }
                 if(primaryExprResolveNode->literalValue)
                 {
-                    openContext(node->id, editorFindRange(primaryExprResolveNode->literalValue, 0), DUContext::Other, id);
-                    visitPrimaryExprResolve(node->primaryExprResolve);
-                    closeContext();
+                    if (compilingContexts() || contextFromNode(node->id))
+                    {
+                        openContext(node->id, editorFindRange(primaryExprResolveNode->literalValue, 0), DUContext::Other, id);
+                        visitPrimaryExprResolve(node->primaryExprResolve);
+                        closeContext();
+                    }
+                    else
+                    {
+                        visitPrimaryExprResolve(node->primaryExprResolve);
+                    }
                     return;
                 }
                 primaryExprResolveNode = primaryExprResolveNode->primaryExprResolve;
