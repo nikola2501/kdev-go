@@ -3,6 +3,7 @@ kdeveloppgqt_generate(go_parser_SRC go NAMESPACE go DEBUG_VISITOR TOKEN_TEXT GEN
 
 set(go_parser_lib_SRC 
     parsesession.cpp
+    gomodule.cpp
 )
 
 add_library(kdevgoparser SHARED ${go_parser_SRC} ${go_parser_lib_SRC})

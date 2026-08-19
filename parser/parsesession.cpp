@@ -18,6 +18,7 @@
 
 #include <QRegularExpression>
 #include "parsesession.h"
+#include "gomodule.h"
 
 #include "parser/golexer.h"
 #include "parser/goparser.h"
@@ -167,6 +168,24 @@ QList<ReferencedTopDUContext> ParseSession::contextForImport(QString package)
         {
             for(const QString& file : path.entryList(QStringList("*.go"), QDir::Files | QDir::NoSymLinks))
                 files.append(path.filePath(file));
+        }
+    }
+    //Go modules: the module itself, vendor/ and the module cache
+    if(files.empty())
+    {
+        QString localFile = m_document.toUrl().toLocalFile();
+        if(localFile.isEmpty())
+            localFile = m_document.str();
+        go::GoModule module = go::GoModule::forFile(localFile);
+        if(module.isValid())
+        {
+            QString packageDir = module.resolveImportDir(package);
+            if(!packageDir.isEmpty())
+            {
+                QDir path(packageDir);
+                for(const QString& file : path.entryList(QStringList("*.go"), QDir::Files | QDir::NoSymLinks))
+                    files.append(path.filePath(file));
+            }
         }
     }
     if(files.empty())

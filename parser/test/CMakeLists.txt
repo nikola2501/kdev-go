@@ -6,3 +6,9 @@ ecm_add_test(parsertest.cpp
         KDev::Language
         KDev::Tests
         )
+ecm_add_test(gomoduletest.cpp
+        LINK_LIBRARIES
+        kdevgoparser
+        Qt6::Test
+        Qt6::Core
+        )

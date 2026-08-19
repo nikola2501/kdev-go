@@ -89,7 +89,7 @@ QList< QString > Helper::getSearchPaths(QUrl document)
 QByteArray Helper::getGoEnv(QString name)
 {
     QProcess p;
-    p.start("go env " + name);
+    p.start("go", {"env", name});
     p.waitForFinished();
     QByteArray result = p.readAllStandardOutput();
     if(result.endsWith("\n"))
