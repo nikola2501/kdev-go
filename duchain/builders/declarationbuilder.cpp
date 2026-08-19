@@ -118,19 +118,26 @@ void DeclarationBuilder::declareVariables(go::IdentifierAst* id, go::IdListAst* 
     go::ExpressionVisitor exprVisitor(m_session, currentContext(), this);
     exprVisitor.visitExpression(expression);
     visitExpression(expression);
-    Q_ASSERT(exprVisitor.lastTypes().size() != 0);
+    //type inference can fail on syntax this plugin does not understand yet
+    //(e.g. generics); declare the variables with an unknown type then
+    auto firstType = [](go::ExpressionVisitor& visitor) {
+        return visitor.lastTypes().isEmpty() ? AbstractType::Ptr() : visitor.lastTypes().first();
+    };
     if(!expressionList)
+    {
         types = exprVisitor.lastTypes();
+        if(types.isEmpty())
+            types.append(AbstractType::Ptr());
+    }
     else
     {
-        types.append(exprVisitor.lastTypes().first());
+        types.append(firstType(exprVisitor));
         auto iter = expressionList->expressionsSequence->front(), end = iter;
         do
         {
             exprVisitor.clearAll();
             exprVisitor.visitExpression(iter->element);
-            Q_ASSERT(exprVisitor.lastTypes().size() != 0);
-            types.append(exprVisitor.lastTypes().first());
+            types.append(firstType(exprVisitor));
             iter = iter->next;
         }
         while (iter != end);
@@ -173,7 +180,7 @@ void DeclarationBuilder::declareVariable(go::IdentifierAst* id, const AbstractTy
     auto wasDeclaredInCurrentContext = declaration && declaration.data()->range() != editorFindRange(id, 0);
     if(identifier.toString() != "_" && !wasDeclaredInCurrentContext)
     {
-        if(type->modifiers() & AbstractType::ConstModifier)
+        if(type && (type->modifiers() & AbstractType::ConstModifier))
         {
             setComment(m_lastConstComment);
         }
@@ -253,6 +260,11 @@ void DeclarationBuilder::visitMethodDeclaration(go::MethodDeclarationAst* node)
 {
 
     go::GoFunctionDeclaration* functionDeclaration = nullptr;
+    //the method declaration lives in the container type's context, which
+    //belongs to ANOTHER file's top context; a concurrent reparse of that file
+    //can delete it whenever we do not hold the DUChain lock, so guard the raw
+    //pointer and re-validate after every lock gap
+    DeclarationPointer functionDeclarationGuard;
     QualifiedIdentifier typeIdentifier;
     auto containerType = go::getMethodRecvTypeIdentifier(node->methodRecv);
 
@@ -277,6 +289,7 @@ void DeclarationBuilder::visitMethodDeclaration(go::MethodDeclarationAst* node)
         auto range = RangeInRevision(currentContext()->range().start, currentContext()->range().start);
         functionDeclaration = openDeclaration<go::GoFunctionDeclaration>(identifierForNode(node->methodName).last(), range);
         functionDeclaration->setAutoDeclaration(true);
+        functionDeclarationGuard = DeclarationPointer(functionDeclaration);
         closeDeclaration();
 
         closeInjectedContext();
@@ -285,11 +298,19 @@ void DeclarationBuilder::visitMethodDeclaration(go::MethodDeclarationAst* node)
     QualifiedIdentifier identifier;
     {
         DUChainReadLocker lock;
+        if(!functionDeclarationGuard)
+            return;
         identifier = functionDeclaration->qualifiedIdentifier();
     }
 
     openContext(node, editorFindRange(node, 0), DUContext::ContextType::Class, typeIdentifier);
     DUChainWriteLocker lock;
+    if(!functionDeclarationGuard)
+    {
+        lock.unlock();
+        closeContext();
+        return;
+    }
     auto functionDefinition = buildMethod(node->signature, node->body, node->methodName, functionDeclaration, m_session->commentBeforeToken(node->startToken-1), identifier);
     functionDeclaration->setType(functionDefinition->type<go::GoFunctionType>());
     functionDeclaration->setKind(Declaration::Instance);
@@ -307,7 +328,8 @@ void DeclarationBuilder::visitMethodDeclaration(go::MethodDeclarationAst* node)
             injectType(PointerType::Ptr(ptype));
         }
         DUChainWriteLocker n;
-        functionDefinition->setDeclaration(functionDeclaration);
+        if(functionDeclarationGuard)
+            functionDefinition->setDeclaration(functionDeclaration);
         auto methodReceiverName = node->methodRecv->nameOrType;
         Declaration* thisVariable = openDeclaration<Declaration>(identifierForNode(methodReceiverName).last(),
                                                                  editorFindRange(methodReceiverName, 0));
