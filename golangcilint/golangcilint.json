@@ -1,0 +1,41 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Mikhail Ivchenko",
+                "Name[ca@valencia]": "Mikhail Ivchenko",
+                "Name[ca]": "Mikhail Ivchenko",
+                "Name[cs]": "Mikhail Ivchenko",
+                "Name[de]": "Mikhail Ivchenko",
+                "Name[en_GB]": "Mikhail Ivchenko",
+                "Name[es]": "Mikhail Ivchenko",
+                "Name[fi]": "Mikhail Ivchenko",
+                "Name[fr]": "Mikhail Ivchenko",
+                "Name[gl]": "Mikhail Ivchenko",
+                "Name[it]": "Mikhail Ivchenko",
+                "Name[ko]": "Mikhail Ivchenko",
+                "Name[nl]": "Mikhail Ivchenko",
+                "Name[pl]": "Mikhail Ivchenko",
+                "Name[pt]": "Mikhail Ivchenko",
+                "Name[ru]": "Михаил Ивченко",
+                "Name[sv]": "Mikhail Ivchenko",
+                "Name[tr]": "Mikhail Ivchenko",
+                "Name[uk]": "Михайло Івченко",
+                "Name[x-test]": "xxMikhail Ivchenkoxx",
+                "Name[zh_TW]": "Mikhail Ivchenko"
+            }
+        ],
+        "Category": "Analyzers",
+        "Description": "This plugin integrates golangci-lint (Go linters aggregator) into KDevelop",
+        "License": "GPL",
+        "Name": "golangci-lint Support",
+        "ServiceTypes": [
+            "KDevelop/Plugin"
+        ]
+    },
+    "X-KDevelop-Category": "Global",
+    "X-KDevelop-IRequired": [
+        "org.kdevelop.IExecutePlugin"
+    ],
+    "X-KDevelop-Mode": "GUI"
+}

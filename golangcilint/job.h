@@ -1,4 +1,4 @@
-/* KDevelop gometalinter support
+/* KDevelop golangci-lint support
  *
  * Copyright 2017 Mikhail Ivchenko <ematirov@gmail.com>
  *
@@ -17,7 +17,7 @@
 
 class QElapsedTimer;
 
-namespace GoMetaLinter
+namespace GolangciLint
 {
 
 class Job : public KDevelop::OutputExecuteJob

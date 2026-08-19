@@ -1,4 +1,4 @@
-/* KDevelop gometalinter support
+/* KDevelop golangci-lint support
  *
  * Copyright 2017 Mikhail Ivchenko <ematirov@gmail.com>
  *
@@ -26,29 +26,29 @@
 #include <kactioncollection.h>
 #include <QtCore/QMimeDatabase>
 
-K_PLUGIN_FACTORY_WITH_JSON(GoMetaLinterFactory, "gometalinter.json", registerPlugin<GoMetaLinter::Plugin>();)
+K_PLUGIN_FACTORY_WITH_JSON(GolangciLintFactory, "golangcilint.json", registerPlugin<GolangciLint::Plugin>();)
 
-namespace GoMetaLinter
+namespace GolangciLint
 {
 
 Plugin::Plugin(QObject* parent, const KPluginMetaData& metaData, const QVariantList&)
-    : IPlugin(QStringLiteral("gometalinter"), parent, metaData),
+    : IPlugin(QStringLiteral("golangcilint"), parent, metaData),
       m_currentProject(nullptr),
       m_model(new ProblemModel(this)),
       m_job(nullptr)
 {
-    setXMLFile(QStringLiteral("gometalinter.rc"));
+    setXMLFile(QStringLiteral("golangcilint.rc"));
 
     auto analyzeFile = [this](){ run(false); };
     auto analyzeProject = [this](){ run(true); };
 
-    m_menuActionFile = new QAction(i18n("Analyze Current File with Go Meta Linter"), this);
+    m_menuActionFile = new QAction(i18n("Analyze Current File with golangci-lint"), this);
     connect(m_menuActionFile, &QAction::triggered, this, analyzeFile);
-    actionCollection()->addAction(QStringLiteral("gometalinter_file"), m_menuActionFile);
+    actionCollection()->addAction(QStringLiteral("golangcilint_file"), m_menuActionFile);
 
-    m_menuActionProject = new QAction(i18n("Analyze Current Project with Go Meta Linter"), this);
+    m_menuActionProject = new QAction(i18n("Analyze Current Project with golangci-lint"), this);
     connect(m_menuActionProject, &QAction::triggered, this, analyzeProject);
-    actionCollection()->addAction(QStringLiteral("gometalinter_project"), m_menuActionProject);
+    actionCollection()->addAction(QStringLiteral("golangcilint_project"), m_menuActionProject);
 
     auto documentController = core()->documentController();
     connect(documentController, &KDevelop::IDocumentController::documentClosed, this, &Plugin::updateActions);
@@ -58,13 +58,13 @@ Plugin::Plugin(QObject* parent, const KPluginMetaData& metaData, const QVariantL
     connect(projectController, &KDevelop::IProjectController::projectOpened, this, &Plugin::updateActions);
     connect(projectController, &KDevelop::IProjectController::projectClosed, this, &Plugin::projectClosed);
 
-    m_contextActionFile = new QAction(i18n("Go Meta Linter"), this);
+    m_contextActionFile = new QAction(i18n("golangci-lint"), this);
     connect(m_contextActionFile, &QAction::triggered, this, analyzeFile);
 
-    m_contextActionProject = new QAction(i18n("Go Meta Linter"), this);
+    m_contextActionProject = new QAction(i18n("golangci-lint"), this);
     connect(m_contextActionProject, &QAction::triggered, this, analyzeProject);
 
-    m_contextActionProjectItem = new QAction(i18n("Go Meta Linter"), this);
+    m_contextActionProjectItem = new QAction(i18n("golangci-lint"), this);
 
     updateActions();
 }
@@ -76,7 +76,9 @@ Plugin::~Plugin()
 
 void Plugin::run(bool checkProject)
 {
-    auto path = checkProject ? m_currentProject->path().toUrl() : core()->documentController()->activeDocument()->url();
+    //golangci-lint analyzes packages, so for a single file lint its directory
+    auto path = checkProject ? m_currentProject->path().toUrl()
+                             : core()->documentController()->activeDocument()->url().adjusted(QUrl::RemoveFilename);
     run(m_currentProject, path.toLocalFile());
 }
 

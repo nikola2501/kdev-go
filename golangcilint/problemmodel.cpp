@@ -1,4 +1,4 @@
-/* KDevelop gometalinter support
+/* KDevelop golangci-lint support
  *
  * Copyright 2017 Mikhail Ivchenko <ematirov@gmail.com>
  *
@@ -19,7 +19,7 @@
 
 #include <klocalizedstring.h>
 
-namespace GoMetaLinter
+namespace GolangciLint
 {
 
 inline KDevelop::ProblemModelSet* problemModelSet()
@@ -36,7 +36,7 @@ ProblemModel::ProblemModel(Plugin* plugin)
 {
     setFeatures(CanDoFullUpdate | ScopeFilter | SeverityFilter | Grouping | CanByPassScopeFilter);
     reset();
-    problemModelSet()->addModel(problemModelId, i18n("Go Meta Linter"), this);
+    problemModelSet()->addModel(problemModelId, i18n("golangci-lint"), this);
 }
 
 ProblemModel::~ProblemModel()
@@ -101,7 +101,7 @@ void ProblemModel::reset(KDevelop::IProject* project, const QString& path)
     clearProblems();
     m_problems.clear();
 
-    QString tooltip = i18nc("@info:tooltip", "Re-Run Last Go Meta Linter Analysis");
+    QString tooltip = i18nc("@info:tooltip", "Re-Run Last golangci-lint Analysis");
     setFullUpdateTooltip(tooltip);
 }
 

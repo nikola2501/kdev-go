@@ -1,4 +1,4 @@
-/* KDevelop gometalinter support
+/* KDevelop golangci-lint support
  *
  * Copyright 2017 Mikhail Ivchenko <ematirov@gmail.com>
  *
@@ -18,7 +18,7 @@
 #include <interfaces/iproject.h>
 #include <outputview/outputexecutejob.h>
 
-namespace GoMetaLinter
+namespace GolangciLint
 {
 
 class Plugin : public KDevelop::IPlugin

@@ -64,7 +64,7 @@ add_subdirectory(buildsystem)
 add_subdirectory(parser)
 add_subdirectory(duchain)
 add_subdirectory(codecompletion)
-add_subdirectory(gometalinter)
+add_subdirectory(golangcilint)
 
 kdevplatform_add_plugin(kdevgoplugin JSON kdevgo.json SOURCES
     kdevgoplugin.cpp

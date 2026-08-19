@@ -1,4 +1,4 @@
-/* KDevelop gometalinter support
+/* KDevelop golangci-lint support
  *
  * Copyright 2017 Mikhail Ivchenko <ematirov@gmail.com>
  *
@@ -18,7 +18,7 @@ namespace KDevelop
     class IProject;
 }
 
-namespace GoMetaLinter
+namespace GolangciLint
 {
 
 class Plugin;
