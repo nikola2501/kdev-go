@@ -13,7 +13,7 @@ include(GenerateExportHeader)
 include(FeatureSummary)
 
 set(QT_MIN_VERSION "6.5.0")
-find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED Core Widgets Test)
+find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED Core Widgets Network Test)
 set(KF6_DEP_VERSION "6.0.0")
 find_package(KF6 ${KF6_DEP_VERSION} REQUIRED COMPONENTS
     ThreadWeaver
@@ -65,6 +65,7 @@ add_subdirectory(parser)
 add_subdirectory(duchain)
 add_subdirectory(codecompletion)
 add_subdirectory(golangcilint)
+add_subdirectory(dlv)
 
 kdevplatform_add_plugin(kdevgoplugin JSON kdevgo.json SOURCES
     kdevgoplugin.cpp

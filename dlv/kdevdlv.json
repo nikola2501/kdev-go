@@ -1,0 +1,17 @@
+{
+    "KPlugin": {
+        "Category": "Debugging",
+        "Description": "This plugin provides Go debugging with Delve (dlv) through the Debug Adapter Protocol",
+        "Icon": "debug-run",
+        "License": "GPL",
+        "Name": "Delve Support",
+        "ServiceTypes": [
+            "KDevelop/Plugin"
+        ]
+    },
+    "X-KDevelop-Category": "Global",
+    "X-KDevelop-IRequired": [
+        "org.kdevelop.IExecutePlugin"
+    ],
+    "X-KDevelop-Mode": "GUI"
+}
