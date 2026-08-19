@@ -20,6 +20,7 @@
 #include "godebugvisitor.h"
 
 #include "parsesession.h"
+#include <language/editor/documentrange.h>
 
 int main(int argc, char** argv)
 {
@@ -36,8 +37,14 @@ int main(int argc, char** argv)
     QByteArray code = in.readAll().toUtf8();
     ParseSession session(code, 1);
     bool result=session.startParsing();
-    
-    go::DebugVisitor visitor(getLexer(session), code); 
-    visitor.visitNode(session.ast()); 
-    return !result ? 3 : 0;
+
+    if(!result)
+    {
+        for(const KDevelop::ProblemPointer& problem : session.problems())
+            qDebug() << problem->finalLocation() << problem->description();
+        return 3;
+    }
+    go::DebugVisitor visitor(getLexer(session), code);
+    visitor.visitNode(session.ast());
+    return 0;
 }

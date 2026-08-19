@@ -92,7 +92,7 @@
      LBRACKET ("["), RBRACKET ("]"), STAR ("*"), HAT ("^"), MULTIPLYEQUAL ("*="), XOREQUAL ("^="), LEFTCHAN ("<-"), GREATER (">"), 
      GREATEROREQUAL (">="), LBRACE ("{"), RBRACE ("}"), DIVIDE ("/"), LEFTSHIFT ("<<"), DIVIDEEQUAL ("/="), LEFTSHIFTEQUAL ("<<="), 
      PLUSPLUS ("++"), ASSIGN ("="), AUTOASSIGN (":="), COMMA (","), SEMICOLON (";"), MOD ("%"), RIGHTSHIFT (">>"), MODEQUAL ("%="), 
-     RIGHTSHIFTEQUAL (">>="), MINUSMINUS ("--"), BANG("!"), TRIPLEDOT ("..."), DOT ("."), COLON (":"), AMPERXOR ("&^"), AMPERXOREQUAL ("&^=");;
+     RIGHTSHIFTEQUAL (">>="), MINUSMINUS ("--"), BANG("!"), TRIPLEDOT ("..."), DOT ("."), COLON (":"), AMPERXOR ("&^"), AMPERXOREQUAL ("&^="), TILDE ("~");;
      
 %lexer -> 
   
@@ -206,19 +206,24 @@
 ":" COLON;
 "&^" AMPERXOR;
 "&^=" AMPERXOREQUAL;
+"~" TILDE;
 
 --identifier---------------------------------------------------
  ({alphabetic}|"_")({alphabetic}|[0-9]|"_")*		IDENT;
 --integers-----------------------------------------------------
- ([1-9][0-9]*)|("0"[0-7]*)|("0"("x"|"X")[0-9a-fA-F]+)		INTEGER;
+ ([1-9]("_"|[0-9])*)|("0"("_"|[0-7])*)|("0"("x"|"X")("_"|[0-9a-fA-F])+)|("0"("o"|"O")("_"|[0-7])+)|("0"("b"|"B")("_"|[01])+)		INTEGER;
 --floats-------------------------------------------------------
-  (("e"|"E")("+"|"-")[0-9]+)|(("e"|"E")[0-9]+)   -> exponent;
+  [0-9]("_"|[0-9])*    -> dec_digits;
+  [0-9a-fA-F]("_"|[0-9a-fA-F])*    -> hex_digits;
+  (("e"|"E")("+"|"-"){dec_digits})|(("e"|"E"){dec_digits})   -> exponent;
+  (("p"|"P")("+"|"-"){dec_digits})|(("p"|"P"){dec_digits})   -> hexexponent;
 
-  ([0-9]+"."[0-9]*) | ([0-9]+"."[0-9]*{exponent}) | ([0-9]+{exponent})
-      | ("." [0-9]+) | ("."[0-9]+{exponent}) 	 -> float_literal;
+  ({dec_digits}"."{dec_digits}) | ({dec_digits}".") | ({dec_digits}"."{dec_digits}{exponent}) | ({dec_digits}"."{exponent}) | ({dec_digits}{exponent})
+      | ("."{dec_digits}) | ("."{dec_digits}{exponent})
+      | ("0"("x"|"X"){hex_digits}{hexexponent}) | ("0"("x"|"X"){hex_digits}"."{hexexponent}) | ("0"("x"|"X"){hex_digits}"."{hex_digits}{hexexponent}) 	 -> float_literal;
   {float_literal} 						FLOAT;
 --complex numbers-------------------------------------------------------
-  ([0-9]+ | {float_literal})"i"					COMPLEX;
+  ({dec_digits} | {float_literal} | "0"("x"|"X"){hex_digits} | "0"("o"|"O")("_"|[0-7])+ | "0"("b"|"B")("_"|[01])+)"i"					COMPLEX;
 --rune literals---------------------------------------------------------
 --apparently '\\' should be parsed as rune which we will have to write as "\\\\"
 
@@ -308,7 +313,7 @@ sourceFile=sourceFile
 DOT fullName=identifier | 0
 ->type_resolve;;
 
-name=identifier type_resolve=type_resolve
+name=identifier type_resolve=type_resolve (typeArgs=typeArgs | 0)
 -> typeName;;
 
 typeName=typeName
@@ -342,7 +347,8 @@ STRUCT LBRACE (#fieldDecl=fieldDecl SEMICOLON)* RBRACE
 
 --to resolve first/first between field declaration and anonymous field:
 STAR anonFieldStar=anonymousField (tag=tag | 0)
-| varid=identifier ( (idList=idList | 0) type=type | DOT fullname=identifier | 0) (tag=tag | 0)
+| varid=identifier try/rollback( ( (idList=idList | 0) type=type | DOT fullname=identifier (typeArgs=typeArgs | 0) ) )
+    catch( (typeArgs=typeArgs | 0) ) (tag=tag | 0)
 -> fieldDecl;;
 
 typeName=typeName
@@ -380,7 +386,8 @@ LPAREN (parameter=parameter (COMMA (#parameterList=parameter | 0))* | 0 ) RPAREN
 complexType=complexType
 | parenType=parenType
 | TRIPLEDOT unnamedvartype=type
-| idOrType=identifier ( type=type | TRIPLEDOT vartype=type | DOT fulltype=identifier | 0 )
+| idOrType=identifier try/rollback( ( type=type | TRIPLEDOT vartype=type | DOT fulltype=identifier (typeArgs=typeArgs | 0) ) )
+    catch( (typeArgs=typeArgs | 0) )
 ->parameter;;
 
 --Interfaces------------------------------------------------------------
@@ -389,7 +396,9 @@ INTERFACE LBRACE (#methodSpec=methodSpec SEMICOLON)* RBRACE
 -> interfaceType;;
 
 --		  	Read(a)			fmt.Reader	    Read  <-interface name
-methodName=identifier (signature=signature | DOT fullName=identifier | 0)
+?[: LA(1).kind == Token_IDENT && (LA(2).kind == Token_LPAREN || LA(2).kind == Token_DOT || LA(2).kind == Token_SEMICOLON || LA(2).kind == Token_RBRACE) :]
+  methodName=identifier (signature=signature | DOT fullName=identifier (typeArgs=typeArgs | 0) (BITWISEOR #unionTerm=typeConstraintTerm)* | 0)
+| constraint=typeConstraint
 ->methodSpec;;
 
 --Map Type--------------------------------------------------------------
@@ -406,6 +415,35 @@ CHAN (send=LEFTCHAN | 0 ) rtype=type
 | LEFTCHAN CHAN stype=type
 -> chanType;;
 
+
+
+--Generics (Go 1.18+)---------------------------------------------------
+
+--type parameter list of a generic function or type: [T any, K comparable]
+LBRACKET #typeParam=typeParam (COMMA (#typeParam=typeParam | 0))* RBRACKET
+-> typeParams;;
+
+id=identifier (idList=idList | 0) constraint=typeConstraint
+-> typeParam;;
+
+--constraints are unions of (optionally ~-approximated) type terms
+#term=typeConstraintTerm (BITWISEOR #term=typeConstraintTerm)*
+-> typeConstraint;;
+
+(tilde=TILDE | 0) type=type
+-> typeConstraintTerm;;
+
+--an index/type-argument in expression position: expression or bare type
+try/rollback(expression=expression) catch(type=type)
+-> indexArg;;
+
+--type argument list of an instantiation: List[int], Map[string, V]
+LBRACKET #typeArg=type (COMMA (#typeArg=type | 0))* RBRACKET
+-> typeArgs;;
+
+--receiver type parameters: func (l *List[T]) Len() int
+LBRACKET #param=identifier (COMMA (#param=identifier | 0))* RBRACKET
+-> recvTypeParams;;
 
 
 --Declarations----------------------------------------------------------
@@ -430,7 +468,10 @@ id=identifier (idList=idList | 0) ((type=type | 0) ASSIGN expression=expression 
 TYPE ( typeSpec=typeSpec | LPAREN (#typeSpecList=typeSpec SEMICOLON)* RPAREN )
 -> typeDecl;;
 
-name=identifier type=type
+--the try/rollback resolves [ starting either a type parameter list or an
+--array/slice type: [T any] parses as typeParams, [N]T does not and rolls back
+name=identifier ( try/rollback( typeParams=typeParams (ASSIGN | 0) type=type )
+                  catch( (ASSIGN | 0) type=type ) )
 -> typeSpec;;
 
 --Var Declarations------------------------------------------------------
@@ -443,14 +484,15 @@ id=identifier (idList=idList | 0) (type=type (ASSIGN expression=expression ( exp
 
 --Func Declaration-------------------------------------------------------
 
-funcName=identifier signature=signature (body=block | 0)
+funcName=identifier (typeParams=typeParams | 0) signature=signature (body=block | 0)
 -> funcDeclaration;;
 
 --Method Declaration-----------------------------------------------------
 methodRecv=methodRecv methodName=identifier signature=signature (body=block | 0)
 ->methodDeclaration;; 
 
-LPAREN ( nameOrType=identifier (star=STAR | 0) (type=identifier | 0) | star=STAR ptype=identifier )  RPAREN
+LPAREN ( nameOrType=identifier (star=STAR | 0) (type=identifier (typeParams=recvTypeParams | 0) | typeParams=recvTypeParams | 0)
+       | star=STAR ptype=identifier (typeParams=recvTypeParams | 0) )  RPAREN
 ->methodRecv;;
 
 
@@ -526,7 +568,7 @@ id=identifier ( ?[: !inIfClause || (inIfClause && lparenCount > 0) :] literalVal
 | array=LBRACKET ( arrayOrSliceResolve=arraySliceResolve  (literalValue=literalValue | convArg=conversionArgument)
  | tripledot=TRIPLEDOT RBRACKET element=type literalValue=literalValue )(primaryExprResolve=primaryExprResolve | 0)    --array/slice conversion/literal
 | mapType=mapType ( literalValue=literalValue | convArg=conversionArgument )(primaryExprResolve=primaryExprResolve | 0)	--map type conversion/literal
-| FUNC signature=signature (body=block | convArg=conversionArgument )(primaryExprResolve=primaryExprResolve | 0) 		--func type conversion/literal
+| FUNC signature=signature ( [: bool oldInIfClause_ = inIfClause; int oldLparenCount_ = lparenCount; inIfClause = false; lparenCount = 0; :] body=block [: inIfClause = oldInIfClause_; lparenCount = oldLparenCount_; :] | convArg=conversionArgument )(primaryExprResolve=primaryExprResolve | 0) 		--func type conversion/literal
 | pointerType=pointerType convArg=conversionArgument (primaryExprResolve=primaryExprResolve | 0) 		--pointer type conversion
 | interfaceType=interfaceType convArg=conversionArgument  (primaryExprResolve=primaryExprResolve | 0)		--interface type conversion
 | chanType=chanType convArg=conversionArgument (primaryExprResolve=primaryExprResolve | 0)			--chan type conversion
@@ -562,7 +604,7 @@ expression=expression (COMMA (#expressions=expression | 0))* (tripleDot=TRIPLEDO
 { (*yynode)->endToken = tokenStream->index() - 2; return true;} :]
 DOT (selector=identifier | LPAREN typeAssertion=type RPAREN ) (primaryExprResolve=primaryExprResolve | 0 ) )
 --increase lParenCounter within brackets to allow literals within brackets in if clauses
-| index=LBRACKET [: if(inIfClause) lparenCount++; :] ( ( low=expression (colon=COLON | 0) | colon=COLON ) ( high=expression (COLON max=expression | 0) | 0 ))
+| index=LBRACKET [: if(inIfClause) lparenCount++; :] ( ( try/rollback(low=expression) catch(lowType=type) ( (COMMA (#indexArgs=indexArg | 0))+ | colon=COLON | 0 ) | colon=COLON ) ( high=expression (COLON max=expression | 0) | 0 ))
 [: if(inIfClause) lparenCount--; :] RBRACKET (primaryExprResolve=primaryExprResolve | 0)
 | LPAREN [: if(inIfClause) lparenCount++; :] callParam=callParam [: if(inIfClause) lparenCount--; :] RPAREN (primaryExprResolve=primaryExprResolve | 0)
 | [: if(inIfClause && lparenCount <= 0) { (*yynode)->endToken = tokenStream->index() - 2; return true;} :] literalValue=literalValue 

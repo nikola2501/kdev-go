@@ -55,6 +55,8 @@ private slots:
   void testShortVarDeclaration_data();
   void testEmptyLabeledStmt();
   void testMapKeyLiteralValue(); //Go 1.5 feature
+  void testModernGoSyntax(); //Go 1.13-1.24 features
+  void testModernGoSyntax_data();
 private:
   QByteArray getCodeFromNode(const QByteArray &code, go::Lexer *lexer, go::AstNode *node);
 };

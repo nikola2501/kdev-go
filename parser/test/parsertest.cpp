@@ -520,6 +520,43 @@ void ParserTest::testEmptyLabeledStmt()
     QVERIFY(session.startParsing());
 }
 
+void ParserTest::testModernGoSyntax_data()
+{
+    QTest::addColumn<QString>("code");
+
+    QTest::newRow("underscore literals") << "var a = 1_000_000; var b = 0b1010; var c = 0o777; var d = 0x_dead_beef; var e = 0x1.8p3; var f = 1_0.5_0e1_0";
+    QTest::newRow("generic function") << "func Map[T, U any](in []T, f func(T) U) []U { return nil }";
+    QTest::newRow("generic type") << "type List[T any] struct { items []T; next *List[T] }";
+    QTest::newRow("multiple type params") << "type Pair[K comparable, V any] struct { key K; val V }";
+    QTest::newRow("generic method receiver") << "func (l *List[T]) Push(v T) {}; func (p Pair[K, V]) Key() K { var k K; return k }";
+    QTest::newRow("union constraint") << "type Number interface { ~int | ~int64 | ~float64 }";
+    QTest::newRow("qualified union") << "type resource interface { trace.GoID | trace.ProcID | trace.ThreadID }";
+    QTest::newRow("constraint with methods") << "type Ordered interface { ~int | ~string; String() string; fmt.Stringer }";
+    QTest::newRow("inline constraint") << "func Sum[T interface{ ~int | ~float64 }](xs []T) T { var s T; return s }";
+    QTest::newRow("instantiation in types") << "var x List[int]; var m map[string]List[int]; var p Pair[string, List[int]]";
+    QTest::newRow("instantiation in expressions") << "func f() { l := List[int]{}; p := Pair[string, int]{}; _ = Map[int, string](nil, nil); _, _ = l, p }";
+    QTest::newRow("type-only type arguments") << "func f() { a := TypeFor[*bool](); b := TypeFor[func(string)](); c := Of[[]byte](); _, _, _ = a, b, c }";
+    QTest::newRow("type alias") << "type A = int; type B = List[string]";
+    QTest::newRow("generic alias") << "type C[T any] = List[T]";
+    QTest::newRow("embedded generic field") << "type S struct { List[int]; pkg.Set[string]; name string }";
+    QTest::newRow("anonymous generic parameter") << "func f(List[int], pkg.Set[string]) {}";
+    QTest::newRow("range over int") << "func f() { for i := range 10 { _ = i } }";
+    QTest::newRow("func literal with statements in if clause") <<
+        "func f() { if err := g(func() error { switch { case true: return nil }; return nil }); err != nil { _ = err } }";
+
+    //make sure the old-style code still parses after the grammar surgery
+    QTest::newRow("plain array type") << "type Vec [3]float32; var m [8]func(); const n = 4; type Grid [n][n]int";
+    QTest::newRow("plain interface") << "type RW interface { Read(p []byte) (n int, err error); io.Writer }";
+}
+
+void ParserTest::testModernGoSyntax()
+{
+    QFETCH(QString, code);
+    QString source = QString("package main; %1").arg(code);
+    ParseSession session(source.toUtf8(), 0, true);
+    QVERIFY(session.startParsing());
+}
+
 void ParserTest::testMapKeyLiteralValue()
 {
     QString code("package main; type T struct { method string }; func main() { var x = map[T]int{{\"foo\"} : 3, }; "
