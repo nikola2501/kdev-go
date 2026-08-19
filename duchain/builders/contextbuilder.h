@@ -99,15 +99,6 @@ public:
      **/
     go::IdentifierAst* identifierAstFromExpressionAst(go::ExpressionAst* node);
 
-    /**
-     * Whether the conditional named-literal context may be opened here.
-     * Contexts must never be created outside the declaration pass, but the
-     * declaration lookup this context depends on can change between the
-     * passes (imports resolve concurrently), so in the use pass the context
-     * is only entered when the declaration pass actually created it.
-     */
-    bool shouldOpenLiteralContext(const KDevelop::QualifiedIdentifier& id);
-
 protected:
   
     ParseSession* m_session;

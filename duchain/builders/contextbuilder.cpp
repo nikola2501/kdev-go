@@ -148,41 +148,23 @@ void ContextBuilder::visitTopLevelDeclaration(go::TopLevelDeclarationAst* node)
     go::DefaultVisitor::visitTopLevelDeclaration(node);
 }
 
-bool ContextBuilder::shouldOpenLiteralContext(const KDevelop::QualifiedIdentifier& id)
-{
-    if(compilingContexts())
-        return true;
-    DUChainReadLocker lock;
-    const auto indexedIdentifier = IndexedQualifiedIdentifier(id);
-    const auto childContexts = currentContext()->childContexts();
-    for(int i = nextContextIndex(); i < childContexts.size(); ++i)
-    {
-        if(childContexts.at(i)->type() == DUContext::Other
-            && childContexts.at(i)->indexedLocalScopeIdentifier() == indexedIdentifier)
-            return true;
-    }
-    return false;
-}
-
 void ContextBuilder::visitPrimaryExpr(go::PrimaryExprAst *node)
 {
+    //the contexts opened here MUST be decided purely from the syntax tree:
+    //the declaration and use passes both walk this code, and any condition
+    //based on a DUChain lookup (e.g. "does this identifier resolve to a
+    //type?") can give different answers in the two passes because other
+    //files of the package are being parsed concurrently in between - the
+    //passes then disagree about the context layout, which corrupts the
+    //recompiling context matcher and crashes the use builder
     if(node->id) {
         QualifiedIdentifier id(identifierForNode(node->id));
-        DeclarationPointer declaration = go::getTypeOrVarDeclaration(id, currentContext());
-        if (!declaration)
+        if (node->literalValue)
         {
-            declaration = go::getDeclaration(id, currentContext());
-        }
-        if (declaration && (node->literalValue) && declaration->kind() == Declaration::Type
-            && shouldOpenLiteralContext(id))
-        {
-            if (node->literalValue)
-            {
-                openContext(node->id, editorFindRange(node->literalValue, 0), DUContext::Other, id);
-                visitLiteralValue(node->literalValue);
-                closeContext();
-                return;
-            }
+            openContext(node->id, editorFindRange(node->literalValue, 0), DUContext::Other, id);
+            visitLiteralValue(node->literalValue);
+            closeContext();
+            return;
         }
         else
         {
@@ -195,19 +177,10 @@ void ContextBuilder::visitPrimaryExpr(go::PrimaryExprAst *node)
                 }
                 if(primaryExprResolveNode->literalValue)
                 {
-                    declaration = go::getTypeOrVarDeclaration(id, currentContext());
-                    if (!declaration)
-                    {
-                        declaration = go::getDeclaration(id, currentContext());
-                    }
-                    if(declaration && declaration->kind() == Declaration::Type
-                        && shouldOpenLiteralContext(id))
-                    {
-                        openContext(node->id, editorFindRange(primaryExprResolveNode->literalValue, 0), DUContext::Other, id);
-                        visitPrimaryExprResolve(node->primaryExprResolve);
-                        closeContext();
-                        return;
-                    }
+                    openContext(node->id, editorFindRange(primaryExprResolveNode->literalValue, 0), DUContext::Other, id);
+                    visitPrimaryExprResolve(node->primaryExprResolve);
+                    closeContext();
+                    return;
                 }
                 primaryExprResolveNode = primaryExprResolveNode->primaryExprResolve;
             }
