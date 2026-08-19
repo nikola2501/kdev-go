@@ -183,6 +183,15 @@ void ExpressionVisitor::visitPrimaryExpr(PrimaryExprAst* node)
                 {
                     pushType(decl->abstractType());
                 }
+                else if(decl->kind() == Declaration::Type && node->primaryExprResolve)
+                {//an instantiated generic type: List[int]{} or List[int](x)
+                    //push the type so the index resolve keeps it and the
+                    //following literal gets the generic type's structure
+                    StructureType* type = new StructureType();
+                    DUChainReadLocker lock;
+                    type->setDeclaration(decl.data());
+                    pushType(AbstractType::Ptr(type));
+                }
             }
         }
     }

@@ -18,6 +18,8 @@
 
 #include "typebuilder.h"
 
+#include <language/duchain/types/delayedtype.h>
+
 #include <language/duchain/types/arraytype.h>
 #include <language/duchain/types/pointertype.h>
 
@@ -93,6 +95,13 @@ void TypeBuilder::buildTypeName(IdentifierAst* typeName, IdentifierAst* fullName
         if(decl)
         {
             DUChainReadLocker lock;
+            //a generic type parameter carries a delayed type named after itself;
+            //reuse it so variables print as "T" instead of "pkg::func::T"
+            if(decl->kind() == Declaration::Type && decl->abstractType().dynamicCast<DelayedType>())
+            {
+                injectType(decl->abstractType());
+                return;
+            }
             StructureType* type = new StructureType();
             type->setDeclaration(decl.data());
             injectType(AbstractType::Ptr(type));
@@ -142,6 +151,7 @@ void TypeBuilder::visitStructType(go::StructTypeAst* node)
         DUChainWriteLocker lock;
         openContext(node, editorFindRange(node, 0), DUContext::ContextType::Class, m_contextIdentifier);
     }
+    declarePendingTypeParameters();
     TypeBuilderBase::visitStructType(node);
     {
         DUChainWriteLocker lock;
@@ -206,6 +216,7 @@ void TypeBuilder::visitInterfaceType(go::InterfaceTypeAst* node)
         //decl = openDeclaration<ClassDeclaration>(QualifiedIdentifier(), RangeInRevision());
         openContext(node, editorFindRange(node, 0), DUContext::ContextType::Class, m_contextIdentifier);
     }
+    declarePendingTypeParameters();
 
     TypeBuilderBase::visitInterfaceType(node);
     {
@@ -282,6 +293,61 @@ void TypeBuilder::visitParameter(go::ParameterAst* node)
     TypeBuilderBase::visitParameter(node);
 }
 
+void TypeBuilder::setPendingTypeParameters(go::TypeParamsAst* params, go::RecvTypeParamsAst* recvParams)
+{
+    m_pendingTypeParams = params;
+    m_pendingRecvTypeParams = recvParams;
+}
+
+void TypeBuilder::clearPendingTypeParameters()
+{
+    m_pendingTypeParams = nullptr;
+    m_pendingRecvTypeParams = nullptr;
+}
+
+void TypeBuilder::declarePendingTypeParameters()
+{
+    auto declareOne = [this](go::IdentifierAst* id) {
+        if(!id)
+            return;
+        //a type parameter has no concrete type; represent it with a delayed
+        //type carrying its own name so it prints as "T" wherever it is used
+        DelayedType* type = new DelayedType();
+        type->setIdentifier(IndexedTypeIdentifier(identifierForNode(id)));
+        declareTypeParameter(id, AbstractType::Ptr(type));
+    };
+    if(m_pendingTypeParams && m_pendingTypeParams->typeParamSequence)
+    {
+        auto iter = m_pendingTypeParams->typeParamSequence->front(), end = iter;
+        do
+        {
+            declareOne(iter->element->id);
+            if(iter->element->idList && iter->element->idList->idSequence)
+            {
+                auto idIter = iter->element->idList->idSequence->front(), idEnd = idIter;
+                do
+                {
+                    declareOne(idIter->element);
+                    idIter = idIter->next;
+                }
+                while (idIter != idEnd);
+            }
+            iter = iter->next;
+        }
+        while (iter != end);
+    }
+    if(m_pendingRecvTypeParams && m_pendingRecvTypeParams->paramSequence)
+    {
+        auto iter = m_pendingRecvTypeParams->paramSequence->front(), end = iter;
+        do
+        {
+            declareOne(iter->element);
+            iter = iter->next;
+        }
+        while (iter != end);
+    }
+}
+
 go::GoFunctionType::Ptr TypeBuilder::parseSignature(go::SignatureAst *node, bool declareParameters, DUContext **parametersContext, DUContext **returnArgsContext,
                                                     const QualifiedIdentifier &identifier, const QByteArray &comment)
 {
@@ -292,6 +358,7 @@ go::GoFunctionType::Ptr TypeBuilder::parseSignature(go::SignatureAst *node, bool
     if(declareParameters)
     {
         *parametersContext = openContext(node->parameters, editorFindRange(node->parameters, 0), DUContext::ContextType::Function, identifier);
+        declarePendingTypeParameters();
     }
 
     parseParameters(node->parameters, true, declareParameters);
@@ -309,6 +376,7 @@ go::GoFunctionType::Ptr TypeBuilder::parseSignature(go::SignatureAst *node, bool
             if(declareParameters)
             {
                 *returnArgsContext = openContext(node->result, editorFindRange(node->result, 0), DUContext::ContextType::Function, identifier);
+                declarePendingTypeParameters();
             }
 
             parseParameters(node->result->parameters, false, declareParameters);
@@ -325,6 +393,7 @@ go::GoFunctionType::Ptr TypeBuilder::parseSignature(go::SignatureAst *node, bool
     }
 
     closeType();
+    clearPendingTypeParameters();
     return type;
 }
 

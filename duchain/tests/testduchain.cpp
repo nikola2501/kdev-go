@@ -23,6 +23,8 @@
 #include "builders/usebuilder.h"
 #include "types/gointegraltype.h"
 #include "helper.h"
+#include "declarations/functiondefinition.h"
+#include <language/duchain/functiondefinition.h>
 
 #include <QtTest/QtTest>
 #include <language/duchain/use.h>
@@ -835,4 +837,98 @@ void TestDuchain::test_navigationWidget()
     QWidget* widget = decl->context()->createNavigationWidget(decl, decl->topContext());
     QVERIFY(widget);
     delete widget;
+}
+
+void TestDuchain::test_genericFunctionTypeParameters()
+{
+    QString code("package main; func Map[T, U any](in []T, out U) U { var x T; _ = x; return out }");
+    DUContext* context = getPackageContext(code);
+    QVERIFY(context);
+    DUChainReadLocker lock;
+    auto decls = context->findDeclarations(QualifiedIdentifier("Map"));
+    QVERIFY(!decls.isEmpty());
+    auto* function = decls.first();
+    DUContext* body = function->internalContext();
+    QVERIFY(body);
+
+    //the type parameters are declared in the parameters context, which the
+    //body imports - exactly the lookup the IDE performs for uses in the body
+    auto typeParam = body->findDeclarations(QualifiedIdentifier("T"));
+    QVERIFY(!typeParam.isEmpty());
+    QCOMPARE(typeParam.first()->kind(), Declaration::Type);
+    QCOMPARE(typeParam.first()->abstractType()->toString(), QString("T"));
+    QVERIFY(!body->findDeclarations(QualifiedIdentifier("U")).isEmpty());
+
+    //parameters typed with a type parameter get that delayed type
+    auto param = body->findDeclarations(QualifiedIdentifier("in"));
+    QVERIFY(!param.isEmpty());
+    QCOMPARE(param.first()->abstractType()->toString(), QString("T[]"));
+
+    //and so do local variables in the body
+    auto local = body->findDeclarations(QualifiedIdentifier("x"));
+    QVERIFY(!local.isEmpty());
+    QCOMPARE(local.first()->abstractType()->toString(), QString("T"));
+}
+
+void TestDuchain::test_genericStructTypeParameters()
+{
+    QString code("package main; type List[T any] struct { items []T; next *List[T] }");
+    DUContext* context = getPackageContext(code);
+    QVERIFY(context);
+    DUChainReadLocker lock;
+    auto decls = context->findDeclarations(QualifiedIdentifier("List"));
+    QVERIFY(!decls.isEmpty());
+    DUContext* structContext = decls.first()->internalContext();
+    QVERIFY(structContext);
+
+    auto typeParam = structContext->findDeclarations(QualifiedIdentifier("T"));
+    QVERIFY(!typeParam.isEmpty());
+    QCOMPARE(typeParam.first()->kind(), Declaration::Type);
+
+    auto field = structContext->findDeclarations(QualifiedIdentifier("items"));
+    QVERIFY(!field.isEmpty());
+    QCOMPARE(field.first()->abstractType()->toString(), QString("T[]"));
+}
+
+void TestDuchain::test_genericMethodReceiver()
+{
+    QString code("package main; type List[T any] struct { items []T }; "
+                 "func (l *List[T]) Push(v T) { l.items = append(l.items, v) }");
+    DUContext* context = getPackageContext(code);
+    QVERIFY(context);
+    DUChainReadLocker lock;
+    auto typeDecls = context->findDeclarations(QualifiedIdentifier("List"));
+    QVERIFY(!typeDecls.isEmpty());
+    auto methodDecls = typeDecls.first()->internalContext()->findDeclarations(QualifiedIdentifier("Push"));
+    QVERIFY(!methodDecls.isEmpty());
+
+    //the receiver type parameter T is visible in the method body
+    auto* definition = KDevelop::FunctionDefinition::definition(methodDecls.first());
+    QVERIFY(definition);
+    DUContext* body = definition->internalContext();
+    QVERIFY(body);
+    auto typeParam = body->findDeclarations(QualifiedIdentifier("T"));
+    QVERIFY(!typeParam.isEmpty());
+    QCOMPARE(typeParam.first()->kind(), Declaration::Type);
+    auto param = body->findDeclarations(QualifiedIdentifier("v"));
+    QVERIFY(!param.isEmpty());
+    QCOMPARE(param.first()->abstractType()->toString(), QString("T"));
+}
+
+void TestDuchain::test_genericInstantiation()
+{
+    QString code("package main; type List[T any] struct { items []T }; func main() { l := List[int]{}; _ = l }");
+    DUContext* context = getMainContext(code);
+    QVERIFY(context);
+    DUChainReadLocker lock;
+    auto decls = context->findDeclarations(QualifiedIdentifier("l"));
+    QVERIFY(!decls.isEmpty());
+    //an instantiated type resolves to the generic type's structure, so member
+    //access and completion on l work
+    auto structure = decls.first()->abstractType().dynamicCast<StructureType>();
+    QVERIFY(structure);
+    auto* typeDeclaration = structure->declaration(decls.first()->topContext());
+    QVERIFY(typeDeclaration);
+    QCOMPARE(typeDeclaration->identifier().toString(), QString("List"));
+    QVERIFY(!typeDeclaration->internalContext()->findDeclarations(QualifiedIdentifier("items")).isEmpty());
 }

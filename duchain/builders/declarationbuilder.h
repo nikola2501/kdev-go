@@ -69,10 +69,11 @@ public:
     /**
      * A shortcut for ExpressionVisitor to build function type
      **/
-    go::GoFunctionDeclaration* buildFunction(go::SignatureAst* node, go::BlockAst* block = nullptr, go::IdentifierAst* name = nullptr, const QByteArray& comment = {});
+    go::GoFunctionDeclaration* buildFunction(go::SignatureAst* node, go::BlockAst* block = nullptr, go::IdentifierAst* name = nullptr, const QByteArray& comment = {}, go::TypeParamsAst* typeParams = nullptr);
 
     go::GoFunctionDefinition* buildMethod(go::SignatureAst* node, go::BlockAst* block = nullptr, go::IdentifierAst* name = nullptr,
-                                    go::GoFunctionDeclaration* pDeclaration = nullptr, const QByteArray &array = {}, const QualifiedIdentifier &identifier = {});
+                                    go::GoFunctionDeclaration* pDeclaration = nullptr, const QByteArray &array = {}, const QualifiedIdentifier &identifier = {},
+                                    go::RecvTypeParamsAst* recvTypeParams = nullptr);
 
     /*struct GoImport{
         GoImport(bool anon, KDevelop::TopDUContext* ctx) : anonymous(anon), context(ctx) {}
@@ -107,6 +108,8 @@ private:
      **/
     go::GoFunctionDeclaration* declareFunction(go::IdentifierAst* id, const go::GoFunctionType::Ptr& type,
                                                        DUContext* paramContext, DUContext* retparamContext, const QByteArray& comment = {}, DUContext* bodyContext = nullptr) override;
+
+    void declareTypeParameter(go::IdentifierAst* id, const KDevelop::AbstractType::Ptr& type) override;
 
     go::GoFunctionDefinition* declareMethod(go::IdentifierAst* id, const go::GoFunctionType::Ptr& type,
                                               DUContext* paramContext, DUContext* retparamContext, const QByteArray& comment=QByteArray(),

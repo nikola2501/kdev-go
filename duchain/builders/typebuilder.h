@@ -70,6 +70,22 @@ protected:
     virtual void declareVariable(go::IdentifierAst* id, const KDevelop::AbstractType::Ptr& type) = 0;
 
     /**
+     * Declares a generic type parameter (e.g. T in func F[T any]) in the current context.
+     */
+    virtual void declareTypeParameter(go::IdentifierAst* id, const KDevelop::AbstractType::Ptr& type) = 0;
+
+    /**
+     * Declares the pending type parameters (set by setPendingTypeParameters) in the
+     * current context. Type parameters are declared into every context of the
+     * signature (parameters and return arguments) as well as struct/interface
+     * bodies, so that uses of T resolve everywhere the parameter is in scope.
+     */
+    void declarePendingTypeParameters();
+
+    void setPendingTypeParameters(go::TypeParamsAst* params, go::RecvTypeParamsAst* recvParams);
+    void clearPendingTypeParameters();
+
+    /**
      * declared here as pure virtual so we can use that when building functions
      **/
     virtual go::GoFunctionDeclaration* declareFunction(go::IdentifierAst* id, const GoFunctionType::Ptr& type,
@@ -96,6 +112,8 @@ protected:
     void addArgumentHelper(go::GoFunctionType::Ptr function, KDevelop::AbstractType::Ptr argument, bool parseArguments);
 
     KDevelop::QualifiedIdentifier m_contextIdentifier;
+    go::TypeParamsAst* m_pendingTypeParams = nullptr;
+    go::RecvTypeParamsAst* m_pendingRecvTypeParams = nullptr;
 
 };
 

@@ -241,7 +241,7 @@ void DeclarationBuilder::visitConstSpec(go::ConstSpecAst* node)
 
 void DeclarationBuilder::visitFuncDeclaration(go::FuncDeclarationAst* node)
 {
-    buildFunction(node->signature, node->body, node->funcName, m_session->commentBeforeToken(node->startToken-1));
+    buildFunction(node->signature, node->body, node->funcName, m_session->commentBeforeToken(node->startToken-1), node->typeParams);
 }
 
 void DeclarationBuilder::visitPrimaryExpr(go::PrimaryExprAst *node)
@@ -311,7 +311,8 @@ void DeclarationBuilder::visitMethodDeclaration(go::MethodDeclarationAst* node)
         closeContext();
         return;
     }
-    auto functionDefinition = buildMethod(node->signature, node->body, node->methodName, functionDeclaration, m_session->commentBeforeToken(node->startToken-1), identifier);
+    auto functionDefinition = buildMethod(node->signature, node->body, node->methodName, functionDeclaration, m_session->commentBeforeToken(node->startToken-1), identifier,
+                                          node->methodRecv ? node->methodRecv->typeParams : nullptr);
     functionDeclaration->setType(functionDefinition->type<go::GoFunctionType>());
     functionDeclaration->setKind(Declaration::Instance);
     lock.unlock();
@@ -359,7 +360,11 @@ void DeclarationBuilder::visitTypeSpec(go::TypeSpecAst* node)
         decl->setAlwaysForceDirect(true);
     }
     m_contextIdentifier = identifierForNode(node->name);
+    //type parameters of a generic type declaration are declared into the
+    //struct/interface body context as it opens, so fields can use them
+    setPendingTypeParameters(node->typeParams, nullptr);
     visitType(node->type);
+    clearPendingTypeParameters();
     DUChainWriteLocker lock;
     //qCDebug(DUCHAIN) << lastType()->toString();
     decl->setType(lastType());
@@ -666,6 +671,15 @@ void DeclarationBuilder::visitTypeDecl(go::TypeDeclAst* node)
 }
 
 
+void DeclarationBuilder::declareTypeParameter(go::IdentifierAst* id, const AbstractType::Ptr& type)
+{
+    DUChainWriteLocker lock;
+    Declaration* dec = openDeclaration<Declaration>(identifierForNode(id), editorFindRange(id, 0));
+    dec->setType(type);
+    dec->setKind(Declaration::Type);
+    closeDeclaration();
+}
+
 go::GoFunctionDeclaration* DeclarationBuilder::declareFunction(go::IdentifierAst* id, const go::GoFunctionType::Ptr& type,
                                                                DUContext* paramContext, DUContext* retparamContext, const QByteArray& comment, DUContext* bodyContext)
 {
@@ -726,7 +740,8 @@ go::GoFunctionDefinition* DeclarationBuilder::declareMethod(go::IdentifierAst *i
 }
 
 go::GoFunctionDeclaration* DeclarationBuilder::buildFunction(go::SignatureAst* node, go::BlockAst* block,
-                                                             go::IdentifierAst* name, const QByteArray& comment)
+                                                             go::IdentifierAst* name, const QByteArray& comment,
+                                                             go::TypeParamsAst* typeParams)
 {
     DUContext* bodyContext = nullptr;
     if(block)
@@ -736,13 +751,17 @@ go::GoFunctionDeclaration* DeclarationBuilder::buildFunction(go::SignatureAst* n
     }
     DUContext* returnArgsContext = nullptr;
     DUContext* parametersContext = nullptr;
+    //set only after the body was visited: a func literal nested in the body
+    //parses its own signature and would otherwise consume our parameters
+    setPendingTypeParameters(typeParams, nullptr);
     auto type = parseSignature(node, true, &parametersContext, &returnArgsContext, identifierForNode(name), comment);
     return declareFunction(name, type, parametersContext, returnArgsContext, comment, bodyContext);
 }
 
 go::GoFunctionDefinition* DeclarationBuilder::buildMethod(go::SignatureAst *node, go::BlockAst *block,
                                                           go::IdentifierAst *name, go::GoFunctionDeclaration *declaration,
-                                                          const QByteArray &comment, const QualifiedIdentifier &identifier)
+                                                          const QByteArray &comment, const QualifiedIdentifier &identifier,
+                                                          go::RecvTypeParamsAst* recvTypeParams)
 {
     DUContext* bodyContext = nullptr;
     if(block)
@@ -752,6 +771,7 @@ go::GoFunctionDefinition* DeclarationBuilder::buildMethod(go::SignatureAst *node
     }
     DUContext* parametersContext = nullptr;
     DUContext* returnArgsContext = nullptr;
+    setPendingTypeParameters(nullptr, recvTypeParams);
     auto type = parseSignature(node, true, &parametersContext, &returnArgsContext, identifier, comment);
     return declareMethod(name, type, parametersContext, returnArgsContext, comment, bodyContext, declaration, identifier);
 }

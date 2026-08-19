@@ -56,6 +56,10 @@ private slots:
     void test_functionContextIsCreatedWhenDeclaringAsMemberOfStruct_data();
     void test_functionContextIsCreatedWhenDeclaringAsMemberOfStruct();
     void test_navigationWidget();
+    void test_genericFunctionTypeParameters();
+    void test_genericStructTypeParameters();
+    void test_genericMethodReceiver();
+    void test_genericInstantiation();
 };
 
 
