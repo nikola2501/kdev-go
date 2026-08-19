@@ -42,8 +42,18 @@ AbstractNavigationWidget*
 GoTopDUContext::createNavigationWidget(Declaration* decl, TopDUContext* topContext,
                                              AbstractNavigationWidget::DisplayHints hints) const {
     if (!decl) {
+        //the Code Browser tool view browses whole contexts; show the package
+        //declaration of this file instead of nothing
+        decl = owner();
+        if (!decl) {
+            const auto decls = localDeclarations();
+            if (!decls.isEmpty())
+                decl = decls.first();
+        }
+    }
+    if (!decl) {
         qCDebug(DUCHAIN) << "no declaration, not returning navigationwidget";
-        return 0;
+        return nullptr;
     }
     return new NavigationWidget(decl, topContext, hints);
 }
@@ -53,8 +63,13 @@ AbstractNavigationWidget*
 GoNormalDUContext::createNavigationWidget(Declaration* decl, TopDUContext* topContext,
                                              AbstractNavigationWidget::DisplayHints hints) const {
     if (!decl) {
+        //browsing a context without a declaration: show the surrounding
+        //function/type declaration this context belongs to
+        decl = owner();
+    }
+    if (!decl) {
         qCDebug(DUCHAIN) << "no declaration, not returning navigationwidget";
-        return 0;
+        return nullptr;
     }
     return new NavigationWidget(decl, topContext, hints);
 }

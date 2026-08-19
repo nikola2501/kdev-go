@@ -46,7 +46,6 @@
         "Description[uk]": "За допомогою цього додатка можна інтегрувати gometalinter (засіб статичного аналізу) до KDevelop",
         "Description[x-test]": "xxThis plugin integrates gometalinter (static analysis tool) to KDevelopxx",
         "Description[zh_TW]": "此外掛整合了 gometalinter (靜態分析工具) 到 KDevelop",
-        "Id": "gometalinter",
         "License": "GPL",
         "Name": "Gometalinter Support",
         "Name[ca@valencia]": "Implementació del «gometalinter»",

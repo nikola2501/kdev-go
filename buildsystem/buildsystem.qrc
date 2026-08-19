@@ -1,6 +1,6 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-    <qresource prefix="/kxmlgui5/buildsystem">
+    <qresource prefix="/kxmlgui5/gobuildsystem">
         <file>buildsystem.rc</file>
     </qresource>
 </RCC>

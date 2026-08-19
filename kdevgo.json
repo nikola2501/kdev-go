@@ -2,7 +2,6 @@
     "KPlugin": {
         "Category": "Language Support",
         "Icon": "text-x-go",
-        "Id": "kdevgo",
         "License": "GPL",
         "Name": "Go Support",
         "Name[bs]": "Go podrška",

@@ -21,7 +21,6 @@
         "Description[x-test]": "xxImports Go projectsxx",
         "Description[zh_TW]": "匯入 Go 專案",
         "Icon": "kdevelop",
-        "Id": "KDevGoBuildSystem",
         "Name": "Go Project Manager",
         "Name[ca@valencia]": "Gestor del projecte Go",
         "Name[ca]": "Gestor del projecte Go",
