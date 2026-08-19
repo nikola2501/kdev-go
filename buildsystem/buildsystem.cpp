@@ -13,14 +13,20 @@
 #include "builder.h"
 #include "executabletargetitem.h"
 #include "utils.h"
-#include "builddirchooser.h"
-#include "preferences.h"
+#include "buildjob.h"
 
 #include <interfaces/icore.h>
 #include <interfaces/iprojectcontroller.h>
 #include <interfaces/iplugincontroller.h>
 #include <kpluginfactory.h>
 #include <project/helper.h>
+#include <interfaces/iruncontroller.h>
+
+#include <KActionCollection>
+#include <KLocalizedString>
+
+#include <QAction>
+#include <QIcon>
 
 using namespace KDevelop;
 
@@ -32,6 +38,24 @@ GoBuildSystem::GoBuildSystem(QObject* parent, const KPluginMetaData& metaData, c
     Q_UNUSED(args)
     setXMLFile( "buildsystem.rc" );
 
+    auto* testAction = new QAction(i18n("Run Go Tests"), this);
+    testAction->setIcon(QIcon::fromTheme(QStringLiteral("system-run")));
+    connect(testAction, &QAction::triggered, this, &GoBuildSystem::runTests);
+    actionCollection()->addAction(QStringLiteral("go_test_all"), testAction);
+}
+
+void GoBuildSystem::runTests()
+{
+    //`go test ./...` for every open project that is a Go module
+    const auto projects = core()->projectController()->projects();
+    for(auto* project : projects)
+    {
+        const auto root = Go::moduleRoot(project->path(), Path());
+        if(root.isEmpty())
+            continue;
+        auto* job = new GoBuildJob(this, {QStringLiteral("test"), QStringLiteral("./...")}, root.toUrl());
+        core()->runController()->registerJob(job);
+    }
 }
 
 GoBuildSystem::~GoBuildSystem()
@@ -103,18 +127,8 @@ Path GoBuildSystem::compiler(KDevelop::ProjectTargetItem* p) const
 
 Path GoBuildSystem::buildDirectory(KDevelop::ProjectBaseItem* item) const
 {
-    auto project = item->project();
-    ProjectFolderItem *folder = nullptr;
-    do {
-        folder = dynamic_cast<ProjectFolderItem*>(item);
-        item = item->parent();
-    } while (!folder && item);
-
-    if(folder) {
-        return folder->path();
-    }
-
-    return project->path();
+    //the go tool operates on the module: everything builds from its root
+    return Go::moduleRoot(item);
 }
 
 QList<ProjectTargetItem*> GoBuildSystem::targets(KDevelop::ProjectFolderItem*) const
@@ -125,40 +139,13 @@ QList<ProjectTargetItem*> GoBuildSystem::targets(KDevelop::ProjectFolderItem*) c
 KDevelop::ProjectFolderItem * GoBuildSystem::createFolderItem(KDevelop::IProject* project, const KDevelop::Path& path, KDevelop::ProjectBaseItem* parent)
 {
     ProjectBuildFolderItem *item = new KDevelop::ProjectBuildFolderItem(project, path, parent);
-    new GoExecutableTargetItem(item, item->folderName());
+    //only a "package main" directory produces an executable
+    if(Go::isMainPackage(path))
+        new GoExecutableTargetItem(item, item->folderName());
 
     return item;
 }
 
-int GoBuildSystem::perProjectConfigPages() const
-{
-    return 1;
-}
 
-KDevelop::ConfigPage* GoBuildSystem::perProjectConfigPage(int number, const KDevelop::ProjectConfigOptions &options, QWidget *parent)
-{
-    if (number == 0)
-    {
-        return new GoPreferences(this, options, parent);
-    }
-    return nullptr;
-}
-
-KDevelop::ProjectFolderItem *GoBuildSystem::import(KDevelop::IProject *project)
-{
-    auto buildDir = Go::currentBuildDir(project);
-    if(buildDir.isEmpty())
-    {
-        auto newBuildDir = Path(project->path().parent(), project->name()+"-build");
-        GoBuildDirChooser buildDirChooser;
-        buildDirChooser.setBuildFolder(newBuildDir);
-        if(buildDirChooser.exec())
-        {
-            newBuildDir = buildDirChooser.buildFolder();
-        }
-        Go::setCurrentBuildDir(project, newBuildDir);
-    }
-    return AbstractFileManagerPlugin::import(project);
-}
 
 #include "buildsystem.moc"

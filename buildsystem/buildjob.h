@@ -1,6 +1,7 @@
 /* KDevelop go build support
  *
  * Copyright 2017 Mikhail Ivchenko <ematirov@gmail.com>
+ * Copyright 2026 Nikola <nikolam2501@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,16 +14,14 @@
 
 #include <outputview/outputexecutejob.h>
 
+/** Runs `go <arguments>` in the module root, with compiler-style error parsing. */
 class GoBuildJob : public KDevelop::OutputExecuteJob
 {
     Q_OBJECT
 public:
-
-    GoBuildJob(QObject* parent, QString command, QUrl buildDir, QString resultDir);
+    GoBuildJob(QObject* parent, const QStringList& arguments, const QUrl& moduleRoot);
     QStringList commandLine() const override;
 private:
-    QString m_command;
-    QString m_output;
+    QStringList m_arguments;
 };
 #endif // BUILDJOB_H
-

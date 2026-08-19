@@ -1,6 +1,7 @@
 /* KDevelop go build support
  *
  * Copyright 2017 Mikhail Ivchenko <ematirov@gmail.com>
+ * Copyright 2026 Nikola <nikolam2501@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,15 +15,19 @@
 
 using namespace KDevelop;
 
-GoBuildJob::GoBuildJob(QObject* parent, QString command, QUrl buildDir, QString resultDir) : OutputExecuteJob(parent), m_command(command), m_output(resultDir)
+GoBuildJob::GoBuildJob(QObject* parent, const QStringList& arguments, const QUrl& moduleRoot)
+    : OutputExecuteJob(parent), m_arguments(arguments)
 {
+    setJobName(QStringLiteral("go ") + arguments.join(QLatin1Char(' ')));
     setStandardToolView(IOutputView::BuildView);
-    setFilteringStrategy(new CompilerFilterStrategy(buildDir));
-    setWorkingDirectory(buildDir);
+    setBehaviours(IOutputView::AllowUserClose | IOutputView::AutoScroll);
+    //go prints "path/file.go:line:col: message" relative to the working directory
+    setFilteringStrategy(new CompilerFilterStrategy(moduleRoot));
+    setWorkingDirectory(moduleRoot);
     setProperties(KDevelop::OutputExecuteJob::NeedWorkingDirectory | KDevelop::OutputExecuteJob::DisplayStderr | KDevelop::OutputExecuteJob::IsBuilderHint);
 }
 
 QStringList GoBuildJob::commandLine() const
 {
-    return {"go", m_command, "-o", m_output};
+    return QStringList{QStringLiteral("go")} + m_arguments;
 }

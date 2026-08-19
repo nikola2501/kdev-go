@@ -27,7 +27,7 @@ public:
     KJob* install(KDevelop::ProjectBaseItem *item, const QUrl &installPath) override;
 
 private:
-    KJob *createJobForAction(KDevelop::ProjectBaseItem *item, const QString &action) const;
+    KJob *createJobForAction(KDevelop::ProjectBaseItem *item, const QString &action, bool recursive) const;
 };
 
 #endif // BUILDER_H

@@ -18,7 +18,12 @@ GoExecutableTargetItem::GoExecutableTargetItem(KDevelop::ProjectFolderItem* pare
 
 QUrl GoExecutableTargetItem::builtUrl() const
 {
-    return Go::buildOutputFile(parent()).toUrl();
+    //`go build ./cmd/x` writes the executable, named after the package
+    //directory, into the module root
+    auto* folderItem = parent()->folder();
+    if(!folderItem)
+        return QUrl();
+    return KDevelop::Path(Go::moduleRoot(folderItem), folderItem->folderName()).toUrl();
 }
 
 QUrl GoExecutableTargetItem::installedUrl() const

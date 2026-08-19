@@ -26,7 +26,6 @@ public:
     ~GoBuildSystem() override;
 
     Features features() const override { return Features(Folders | Targets | Files); }
-    KDevelop::ProjectFolderItem* import(KDevelop::IProject* project) override;
     KDevelop::IProjectBuilder* builder() const override;
     KDevelop::Path::List includeDirectories(KDevelop::ProjectBaseItem*) const override;
     KDevelop::Path::List frameworkDirectories(KDevelop::ProjectBaseItem*) const override;
@@ -41,8 +40,9 @@ public:
     KDevelop::Path buildDirectory(KDevelop::ProjectBaseItem*) const override;
     QList<KDevelop::ProjectTargetItem*> targets(KDevelop::ProjectFolderItem*) const override;
     KDevelop::ProjectFolderItem* createFolderItem(KDevelop::IProject * project, const KDevelop::Path & path, KDevelop::ProjectBaseItem * parent) override;
-    int perProjectConfigPages() const override;
-    KDevelop::ConfigPage* perProjectConfigPage(int number, const KDevelop::ProjectConfigOptions& options, QWidget* parent) override;
+
+private Q_SLOTS:
+    void runTests();
 
 private:
     KDevelop::IProjectBuilder* m_builder;
