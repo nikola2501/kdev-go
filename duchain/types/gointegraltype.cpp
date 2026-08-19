@@ -135,7 +135,7 @@ bool GoIntegralType::equals(const KDevelop::AbstractType* rhs) const
         return false;
     }
 
-    Q_ASSERT( fastCast<const GoIntegralType*>(rhs) );
+    Q_ASSERT( dynamic_cast<const GoIntegralType*>(rhs) );
 
     const GoIntegralType* type = static_cast<const GoIntegralType*>(rhs);
 

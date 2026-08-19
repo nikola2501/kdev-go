@@ -1,6 +1,6 @@
 set(gometalinter_SRCS plugin.cpp job.cpp problemmodel.cpp)
 
-qt5_add_resources(gometalinter_SRCS
+qt_add_resources(gometalinter_SRCS
     gometalinter.qrc
 )
 kdevplatform_add_plugin(gometalinter
@@ -12,5 +12,5 @@ target_link_libraries(gometalinter
     KDev::Language
     KDev::Project
     KDev::Shell
-    KF5::ItemViews
+    KF6::ItemViews
 )

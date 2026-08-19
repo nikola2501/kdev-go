@@ -55,6 +55,7 @@ private slots:
     void test_usesAreCreatedInPlaceOfStructFields();
     void test_functionContextIsCreatedWhenDeclaringAsMemberOfStruct_data();
     void test_functionContextIsCreatedWhenDeclaringAsMemberOfStruct();
+    void test_navigationWidget();
 };
 
 

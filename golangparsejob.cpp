@@ -16,6 +16,7 @@
 *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA   *
 *************************************************************************************/
 
+#include <QRegularExpression>
 #include "golangparsejob.h"
 
 #include <language/backgroundparser/urlparselock.h>
@@ -220,7 +221,7 @@ QString GoParseJob::extractCanonicalImport(QString string)
        {
            string = string.mid(i);
            //match "package name // or /* import \" "
-           if(string.indexOf(QRegExp("^package\\s*\\w*\\s*(//|/\\*)\\s*import\\s*\"")) == 0)
+           if(string.indexOf(QRegularExpression("^package\\s*\\w*\\s*(//|/\\*)\\s*import\\s*\"")) == 0)
            {
                int nameStart = string.indexOf("\"")+1;
                int nameEnd = string.indexOf("\"", nameStart);

@@ -134,7 +134,7 @@ bool GoFunctionType::equals(const AbstractType* rhs) const
     if ( ! KDevelop::FunctionType::equals(rhs) ) {
         return false;
     }
-    Q_ASSERT(fastCast<GoFunctionType*>(rhs) );
+    Q_ASSERT(dynamic_cast<const GoFunctionType*>(rhs) );
     const GoFunctionType* _rhs = static_cast<const GoFunctionType*>(rhs);
     TYPE_D(GoFunctionType);
     

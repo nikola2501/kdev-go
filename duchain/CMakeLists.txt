@@ -31,7 +31,7 @@ target_link_libraries(kdevgoduchain LINK_PRIVATE
     kdevgoparser
  )
 
-install(TARGETS kdevgoduchain DESTINATION ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS kdevgoduchain DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
 if(BUILD_TESTING)
     add_subdirectory(tests)

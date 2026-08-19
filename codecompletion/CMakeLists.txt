@@ -19,7 +19,7 @@ target_link_libraries(kdevgocompletion LINK_PRIVATE
     kdevgoparser
 )
 
-install(TARGETS kdevgocompletion DESTINATION ${INSTALL_TARGETS_DEFAULT_ARGS})
+install(TARGETS kdevgocompletion DESTINATION ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 
 if(BUILD_TESTING)
     add_subdirectory(tests)

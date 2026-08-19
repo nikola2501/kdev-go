@@ -26,8 +26,8 @@ using namespace KDevelop;
 
 K_PLUGIN_FACTORY_WITH_JSON(BuildSystemFactory, "buildsystem.json", registerPlugin<GoBuildSystem>(); )
 
-GoBuildSystem::GoBuildSystem( QObject *parent, const QVariantList& args )
-: KDevelop::AbstractFileManagerPlugin( "gobuildsystem", parent ), m_builder(new GoBuilder())
+GoBuildSystem::GoBuildSystem(QObject* parent, const KPluginMetaData& metaData, const QVariantList& args)
+: KDevelop::AbstractFileManagerPlugin(QStringLiteral("gobuildsystem"), parent, metaData), m_builder(new GoBuilder())
 {
     Q_UNUSED(args)
     setXMLFile( "buildsystem.rc" );

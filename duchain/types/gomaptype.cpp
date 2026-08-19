@@ -94,7 +94,7 @@ bool GoMapType::equals(const AbstractType* rhs) const
     if(!AbstractType::equals(rhs))
         return false;
 
-    Q_ASSERT( fastCast<const GoMapType*>(rhs) );
+    Q_ASSERT( dynamic_cast<const GoMapType*>(rhs) );
 
     const GoMapType* type = static_cast<const GoMapType*>(rhs);
 

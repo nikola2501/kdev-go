@@ -95,18 +95,18 @@ void TypeBuilder::buildTypeName(IdentifierAst* typeName, IdentifierAst* fullName
             DUChainReadLocker lock;
             StructureType* type = new StructureType();
             type->setDeclaration(decl.data());
-            injectType<AbstractType>(AbstractType::Ptr(type));
+            injectType(AbstractType::Ptr(type));
             //kDebug() << decl->range();
             return;
         }
         DelayedType* unknown = new DelayedType();
         unknown->setIdentifier(IndexedTypeIdentifier(id));
-        injectType<AbstractType>(AbstractType::Ptr(unknown));
+        injectType(AbstractType::Ptr(unknown));
         return;
     }
     if(type != IntegralType::TypeNone)
     {
-        injectType<AbstractType>(AbstractType::Ptr(new go::GoIntegralType(type)));
+        injectType(AbstractType::Ptr(new go::GoIntegralType(type)));
     }
 }
 
@@ -117,14 +117,14 @@ void TypeBuilder::visitArrayOrSliceType(go::ArrayOrSliceTypeAst* node)
     else if(node->arrayOrSliceResolve->slice)
         visitType(node->arrayOrSliceResolve->slice);
     else //error
-        injectType<AbstractType>(AbstractType::Ptr());
+        injectType(AbstractType::Ptr());
 
     //TODO create custom classes GoArrayType and GoSliceType
     //to properly distinguish between go slices and arrays
     ArrayType* array = new ArrayType();
     //kDebug() << lastType()->toString();
     array->setElementType(lastType());
-    injectType<ArrayType>(ArrayType::Ptr(array));
+    injectType(ArrayType::Ptr(array));
 }
 
 void TypeBuilder::visitPointerType(go::PointerTypeAst* node)
@@ -132,12 +132,12 @@ void TypeBuilder::visitPointerType(go::PointerTypeAst* node)
     PointerType* type = new PointerType();
     visitType(node->type);
     type->setBaseType(lastType());
-    injectType<PointerType>(PointerType::Ptr(type));
+    injectType(PointerType::Ptr(type));
 }
 
 void TypeBuilder::visitStructType(go::StructTypeAst* node)
 {
-    openType<go::GoStructureType>(go::GoStructureType::Ptr(new go::GoStructureType));
+    openType(go::GoStructureType::Ptr(new go::GoStructureType));
     {
         DUChainWriteLocker lock;
         openContext(node, editorFindRange(node, 0), DUContext::ContextType::Class, m_contextIdentifier);
@@ -166,7 +166,7 @@ void TypeBuilder::visitFieldDecl(go::FieldDeclAst* node)
                             node->anonFieldStar->typeName->type_resolve->fullName :
                             node->anonFieldStar->typeName->name;
 
-        injectType<PointerType>(PointerType::Ptr(type));
+        injectType(PointerType::Ptr(type));
         names.append(id);
     }else if(node->type)
     {
@@ -199,7 +199,7 @@ void TypeBuilder::visitFieldDecl(go::FieldDeclAst* node)
 
 void TypeBuilder::visitInterfaceType(go::InterfaceTypeAst* node)
 {
-    openType<go::GoStructureType>(go::GoStructureType::Ptr(new go::GoStructureType));
+    openType(go::GoStructureType::Ptr(new go::GoStructureType));
     //ClassDeclaration* decl;
     {
         DUChainWriteLocker lock;
@@ -287,7 +287,7 @@ go::GoFunctionType::Ptr TypeBuilder::parseSignature(go::SignatureAst *node, bool
 {
     Q_UNUSED(comment);
     go::GoFunctionType::Ptr type(new go::GoFunctionType());
-    openType<go::GoFunctionType>(type);
+    openType(type);
 
     if(declareParameters)
     {

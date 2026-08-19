@@ -21,6 +21,7 @@
 //mostly because it skips type declaration which are not structure types(identified types)
 //TODO come up with a better way to do all this
 
+#include <QRegularExpression>
 #include <language/duchain/abstractfunctiondeclaration.h>
 #include <language/duchain/duchainutils.h>
 #include <language/duchain/types/functiontype.h>
@@ -86,7 +87,8 @@ QString DeclarationNavigationContext::html(bool shorten)
   QExplicitlySharedDataPointer<IDocumentation> doc;
   
   if( !shorten ) {
-    doc = ICore::self()->documentationController()->documentationForDeclaration(declaration().data());
+    if(auto* documentationController = ICore::self()->documentationController())
+      doc = documentationController->documentationForDeclaration(declaration().data());
 
     const AbstractFunctionDeclaration* function = dynamic_cast<const AbstractFunctionDeclaration*>(declaration().data());
     if( function ) {
@@ -104,8 +106,8 @@ QString DeclarationNavigationContext::html(bool shorten)
       AbstractType::Ptr useType = declaration()->abstractType();
       if(declaration()->isTypeAlias()) {
         //Do not show the own name as type of typedefs
-        if(useType.cast<TypeAliasType>())
-          useType = useType.cast<TypeAliasType>()->type();
+        if(useType.dynamicCast<TypeAliasType>())
+          useType = useType.dynamicCast<TypeAliasType>()->type();
       } 
       
       eventuallyMakeTypeLinks( useType );
@@ -113,7 +115,7 @@ QString DeclarationNavigationContext::html(bool shorten)
       modifyHtml() += "<br>";
 
     }else{
-      if( declaration()->kind() == Declaration::Type && declaration()->abstractType().cast<StructureType>()) {
+      if( declaration()->kind() == Declaration::Type && declaration()->abstractType().dynamicCast<StructureType>()) {
         htmlClass();
       }
       if ( declaration()->kind() == Declaration::Namespace ) {
@@ -135,24 +137,22 @@ QString DeclarationNavigationContext::html(bool shorten)
         }else{
           modifyHtml() += i18n("(unresolved forward-declaration) ");
           QualifiedIdentifier id = forwardDec->qualifiedIdentifier();
-          uint count;
-          const IndexedDeclaration* decls;
-          PersistentSymbolTable::self().declarations(id, count, decls);
-          for(uint a = 0; a < count; ++a) {
-            if(decls[a].isValid() && !decls[a].data()->isForwardDeclaration()) {
+          PersistentSymbolTable::self().visitDeclarations(id, [this](const IndexedDeclaration& decl) {
+            if(decl.isValid() && !decl.data()->isForwardDeclaration()) {
               modifyHtml() += "<br />";
-              makeLink(i18n("possible resolution from"), KDevelop::DeclarationPointer(decls[a].data()), NavigationAction::NavigateDeclaration);
-              modifyHtml() += ' ' + decls[a].data()->url().str();
+              makeLink(i18n("possible resolution from"), KDevelop::DeclarationPointer(decl.data()), NavigationAction::NavigateDeclaration);
+              modifyHtml() += ' ' + decl.data()->url().str();
             }
-          }
+            return PersistentSymbolTable::VisitorState::Continue;
+          });
         }
       }
       modifyHtml() += "<br />";
     }
   }else{
     AbstractType::Ptr showType = declaration()->abstractType();
-    if(showType && showType.cast<FunctionType>()) {
-      showType = showType.cast<FunctionType>()->returnType();
+    if(showType && showType.dynamicCast<FunctionType>()) {
+      showType = showType.dynamicCast<FunctionType>()->returnType();
       if(showType)
         modifyHtml() += labelHighlight(i18n("Returns: "));
     }else  if(showType) {
@@ -175,7 +175,7 @@ QString DeclarationNavigationContext::html(bool shorten)
       if(definition && definition->declaration())
         decl = definition->declaration();
 
-      if(decl->abstractType().cast<EnumerationType>())
+      if(decl->abstractType().dynamicCast<EnumerationType>())
         modifyHtml() += labelHighlight(i18n("Enum: "));
       else
         modifyHtml() += labelHighlight(i18n("Container: "));
@@ -246,7 +246,7 @@ QString DeclarationNavigationContext::html(bool shorten)
     modifyHtml() += " ";
     //modifyHtml() += "<br />";
     if(!dynamic_cast<FunctionDefinition*>(declaration().data())) {
-      if( FunctionDefinition* definition = FunctionDefinition::definition(declaration().data()) ) {
+      if( auto* definition = dynamic_cast<FunctionDefinition*>(FunctionDefinition::definition(declaration().data())) ) {
         modifyHtml() += labelHighlight(i18n( " Def.: " ));
         makeLink( QString("%1 :%2").arg( QUrl(definition->url().str()).fileName() ).arg( definition->rangeInCurrentRevision().start().line()+1 ), DeclarationPointer(definition), NavigationAction::JumpToSource );
       }
@@ -273,7 +273,7 @@ QString DeclarationNavigationContext::html(bool shorten)
         modifyHtml() += "<br />" + commentHighlight(comment);
       }
     } else if(!comment.isEmpty()) {
-      comment.replace(QRegExp("<br */>"), "\n"); //do not escape html newlines within the comment
+      comment.replace(QRegularExpression("<br */>"), "\n"); //do not escape html newlines within the comment
       comment = comment.toHtmlEscaped();
       comment.replace('\n', "<br />"); //Replicate newlines in html
       modifyHtml() += commentHighlight(comment);
@@ -322,7 +322,7 @@ void DeclarationNavigationContext::htmlFunction()
     if(!function && !functionDefinition)
         AbstractDeclarationNavigationContext::htmlFunction();
 
-    const go::GoFunctionType::Ptr type = declaration()->abstractType().cast<go::GoFunctionType>();
+    const go::GoFunctionType::Ptr type = declaration()->abstractType().dynamicCast<go::GoFunctionType>();
     if( !type ) {
         modifyHtml() += errorHighlight("Invalid type<br />");
         return;
@@ -372,9 +372,9 @@ void DeclarationNavigationContext::htmlFunction()
             if(type->modifiers() == go::GoFunctionType::VariadicArgument && currentArgNum == decls.size()-1)
             {
                 modifyHtml() += "...";
-                if(fastCast<ArrayType*>(argType.constData()))
+                if(dynamic_cast<ArrayType*>(argType.data()))
                 {//show only element type in variadic parameter
-                    eventuallyMakeTypeLinks(fastCast<ArrayType*>(argType.constData())->elementType());
+                    eventuallyMakeTypeLinks(dynamic_cast<ArrayType*>(argType.data())->elementType());
                 }else
                 {//this shouldn't happen
                     qCDebug(DUCHAIN) << "Variadic type was not resolved to slice type";

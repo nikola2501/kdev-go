@@ -87,19 +87,4 @@ protected:
 }
 
 
-namespace KDevelop
-{
-
-template<>
-inline go::GoIntegralType* fastCast<go::GoIntegralType*>(AbstractType* from) {
-    if ( !from || from->whichType() != AbstractType::TypeIntegral ) {
-        return 0;
-    } else {
-        return dynamic_cast<go::GoIntegralType*>(from);
-    }
-}
-
-}
-
-
 #endif

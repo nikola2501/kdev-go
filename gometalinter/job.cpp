@@ -30,7 +30,7 @@ Job::Job(const QUrl &workingDirectory, const QString &path, QObject *parent)
     setJobName(i18n("Go Meta Linter Analysis"));
 
     setCapabilities(KJob::Killable);
-    setStandardToolView(KDevelop::IOutputView::TestView);
+    setStandardToolView(KDevelop::IOutputView::AnalyzeView);
     setBehaviours(KDevelop::IOutputView::AutoScroll);
 
     setProperties(KDevelop::OutputExecuteJob::JobProperty::DisplayStdout);

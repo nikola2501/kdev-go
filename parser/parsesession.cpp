@@ -16,6 +16,7 @@
 *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA   *
 *************************************************************************************/
 
+#include <QRegularExpression>
 #include "parsesession.h"
 
 #include "parser/golexer.h"
@@ -406,7 +407,7 @@ QByteArray ParseSession::commentBeforeToken(qint64 token)
        }
     }
     if(start != -1 && end != -1 && lineStart  != -1 && lineEnd != -1 && lineEnd == currentLine - 1)
-        return comment.mid(start, end-start+1).replace(QRegExp("\n\\s*//"), "\n").toUtf8();
+        return comment.mid(start, end-start+1).replace(QRegularExpression("\n\\s*//"), "\n").toUtf8();
     return QByteArray();
 }
 

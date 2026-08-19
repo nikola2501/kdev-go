@@ -20,7 +20,6 @@
 
 #include <godebug.h>
 #include <KPluginFactory>
-#include <KAboutData>
 #include <language/codecompletion/codecompletion.h>
 #include <interfaces/icore.h>
 #include <interfaces/ilanguagecontroller.h>
@@ -33,8 +32,8 @@ K_PLUGIN_FACTORY_WITH_JSON(GoPluginFactory, "kdevgo.json", registerPlugin<GoPlug
 using namespace KDevelop;
 
 
-GoPlugin::GoPlugin(QObject* parent, const QVariantList&)
-    : KDevelop::IPlugin("kdevgoplugin", parent),
+GoPlugin::GoPlugin(QObject* parent, const KPluginMetaData& metaData, const QVariantList&)
+    : KDevelop::IPlugin(QStringLiteral("kdevgoplugin"), parent, metaData),
     ILanguageSupport()
 {
     qCDebug(Go) << "Go Language Plugin is loaded\n";

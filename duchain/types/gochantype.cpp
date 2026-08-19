@@ -100,7 +100,7 @@ bool GoChanType::equals(const AbstractType* rhs) const
     if(!AbstractType::equals(rhs))
         return false;
 
-    Q_ASSERT( fastCast<const GoChanType*>(rhs) );
+    Q_ASSERT( dynamic_cast<const GoChanType*>(rhs) );
 
     const GoChanType* type = static_cast<const GoChanType*>(rhs);
 

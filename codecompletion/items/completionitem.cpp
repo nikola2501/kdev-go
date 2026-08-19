@@ -83,10 +83,10 @@ QVariant CompletionItem::data(const QModelIndex& index, int role, const KDevelop
             {
                 return 5;
             }
-            else if(auto gochanTypeToMatch = fastCast<GoChanType*>(typeToMatch.data()))
+            else if(auto gochanTypeToMatch = dynamic_cast<GoChanType*>(typeToMatch.data()))
             {
                 // Handle special cases - "Type" placeholder in builtin functions and passing a bidirectional channel in place of single-directional.
-                if(auto gochanType = fastCast<GoChanType*>(declType.data()))
+                if(auto gochanType = dynamic_cast<GoChanType*>(declType.data()))
                 {
                     auto valueTypeToMatch = gochanTypeToMatch->valueType();
                     bool isTypePlaceholder = valueTypeToMatch->toString() == "Type" && valueTypeToMatch->whichType() == AbstractType::TypeDelayed;
@@ -104,7 +104,7 @@ QVariant CompletionItem::data(const QModelIndex& index, int role, const KDevelop
             }
             else if(declType->whichType() == AbstractType::TypeFunction)
             {
-                GoFunctionType* function = fastCast<GoFunctionType*>(declType.constData());
+                GoFunctionType* function = dynamic_cast<GoFunctionType*>(declType.data());
                 auto args = function->returnArguments();
                 if(args.size() != 0)
                 {

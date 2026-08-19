@@ -51,7 +51,7 @@ FunctionCompletionItem::FunctionCompletionItem(DeclarationPointer declaration, i
             }
         }
     }
-    GoFunctionType::Ptr type(fastCast<GoFunctionType*>(declaration->abstractType().constData()));
+    GoFunctionType::Ptr type(dynamic_cast<GoFunctionType*>(declaration->abstractType().data()));
     if(!type)
         return;
 
@@ -166,9 +166,9 @@ void FunctionCompletionItem::executed(KTextEditor::View* view, const KTextEditor
     }
     document->replaceText(word, declaration()->identifier().toString() + suffix);
     AbstractType::Ptr type = declaration()->abstractType();
-    if(fastCast<GoFunctionType*>(type.constData()))
+    if(dynamic_cast<GoFunctionType*>(type.data()))
     {
-        GoFunctionType* ftype = fastCast<GoFunctionType*>(type.constData());
+        GoFunctionType* ftype = dynamic_cast<GoFunctionType*>(type.data());
         //put cursor inside parentheses if function takes arguments
         if(ftype->arguments().size() > 0)
             view->setCursorPosition(KTextEditor::Cursor(word.end().line(), word.end().column() + 1));

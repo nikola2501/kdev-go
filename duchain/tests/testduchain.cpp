@@ -150,23 +150,23 @@ void TestDuchain::test_declareVariables()
     DUContext* context = getMainContext(code);
     DUChainReadLocker lock;
     Declaration* decl = context->findDeclarations(QualifiedIdentifier("test1")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
     QVERIFY((decl->abstractType()->modifiers() & AbstractType::NoModifiers) == AbstractType::NoModifiers);
     decl = context->findDeclarations(QualifiedIdentifier("test2")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeBool));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeBool));
     decl = context->findDeclarations(QualifiedIdentifier("test3")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeRune));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeRune));
     decl = context->findDeclarations(QualifiedIdentifier("test4")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeFloat64));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeFloat64));
     decl = context->findDeclarations(QualifiedIdentifier("test5")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
     decl = context->findDeclarations(QualifiedIdentifier("test6")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeRune));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeRune));
     auto declarations = context->findDeclarations(QualifiedIdentifier("test7"));
     QCOMPARE(declarations.size(), 0);
 
     decl = context->findDeclarations(QualifiedIdentifier("test8")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
     declarations = context->findDeclarations(QualifiedIdentifier("_"));
     QCOMPARE(declarations.size(), 0);
 }
@@ -244,19 +244,19 @@ void TestDuchain::test_declareVariablesInParametersOfNestedFunction()
     auto declarations = firstFunctionContext->findDeclarations(QualifiedIdentifier("test1"));
     QCOMPARE(declarations.size(), 1);
     auto declaration = declarations.first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(declaration->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(declaration->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
 
     auto secondFunctionContext = mainContext->childContexts().at(3);
     declarations = secondFunctionContext->findDeclarations(QualifiedIdentifier("test2"));
     QCOMPARE(declarations.size(), 1);
     declaration = declarations.first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(declaration->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(declaration->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
 
     auto thirdFunctionContext = mainContext->childContexts().at(5);
     declarations = thirdFunctionContext->findDeclarations(QualifiedIdentifier("test3"));
     QCOMPARE(declarations.size(), 1);
     declaration = declarations.first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(declaration->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(declaration->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
 }
 
 void TestDuchain::test_constants()
@@ -265,19 +265,19 @@ void TestDuchain::test_constants()
     DUContext* context = getPackageContext(code);
     DUChainReadLocker lock;
     Declaration* decl = context->findDeclarations(QualifiedIdentifier("const1")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeFloat32));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeFloat32));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const2")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeFloat32));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeFloat32));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const3")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeRune));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeRune));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const4")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const5")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeString));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeString));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
 }
 
@@ -287,29 +287,29 @@ void TestDuchain::test_constants_omittedType()
     DUContext* context = getPackageContext(code);
     DUChainReadLocker lock;
     Declaration* decl = context->findDeclarations(QualifiedIdentifier("const1")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeUint));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeUint));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const2")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeUint));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeUint));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const3")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeUint));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeUint));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const4")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeUint));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeUint));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
 
     decl = context->findDeclarations(QualifiedIdentifier("const5")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const6")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeFloat64));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeFloat64));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const7")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeInt));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeInt));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
     decl = context->findDeclarations(QualifiedIdentifier("const8")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeFloat64));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeFloat64));
     QVERIFY(decl->abstractType()->modifiers() & AbstractType::ConstModifier);
 
     QCOMPARE(context->findDeclarations(QualifiedIdentifier("const9")).size(), 0);
@@ -560,7 +560,7 @@ void TestDuchain::test_funcparams()
     DUChainReadLocker lock;
     Declaration* decl = context->findDeclarations(QualifiedIdentifier("main::main")).first();
     QVERIFY(decl);
-    go::GoFunctionType::Ptr func = decl->abstractType().cast<go::GoFunctionType>();
+    go::GoFunctionType::Ptr func = decl->abstractType().dynamicCast<go::GoFunctionType>();
     QVERIFY(func);
     QCOMPARE(func->toString(), result);
 }
@@ -657,7 +657,7 @@ void TestDuchain::test_typeAssertions()
     DUContext* context = getMainContext(code);
     DUChainReadLocker lock;
     Declaration* decl = context->findDeclarations(QualifiedIdentifier("test")).first();
-    QCOMPARE(fastCast<go::GoIntegralType*>(decl->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeFloat64));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(decl->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeFloat64));
     decl = context->findDeclarations(QualifiedIdentifier("test2")).first();
     QCOMPARE(decl->abstractType()->toString(), QString("uint*"));
     decl = context->findDeclarations(QualifiedIdentifier("test3")).first();
@@ -680,7 +680,7 @@ void TestDuchain::test_selectCases()
     Declaration* decl = context->findDeclarations(QualifiedIdentifier("test")).first();
     Declaration* ok = context->findDeclarations(QualifiedIdentifier("ok")).first();
     QCOMPARE(decl->abstractType()->toString(), QString("main::mytype"));
-    QCOMPARE(fastCast<go::GoIntegralType*>(ok->abstractType().constData())->dataType(), uint(go::GoIntegralType::TypeBool));
+    QCOMPARE(dynamic_cast<go::GoIntegralType*>(ok->abstractType().data())->dataType(), uint(go::GoIntegralType::TypeBool));
 }
 
 void TestDuchain::test_usesAreAddedInCorrectContext()
@@ -820,4 +820,19 @@ DUContext* getMainContext(const QString& code)
     return getMainContext(package);
 }
 
-
+void TestDuchain::test_navigationWidget()
+{
+    QString code("package main; type mytype int; func main() { var testvar mytype; }");
+    DUContext* context = getMainContext(code);
+    QVERIFY(context);
+    DUChainReadLocker lock;
+    auto decls = context->findDeclarations(QualifiedIdentifier("testvar"));
+    QCOMPARE(decls.size(), 1);
+    Declaration* decl = decls.first();
+    //the tooltip and Alt-popup in the IDE are produced through this call chain;
+    //DUContext's default implementation returns nullptr, so a non-null result
+    //proves the contexts really are GoDUContext instances with our override
+    QWidget* widget = decl->context()->createNavigationWidget(decl, decl->topContext());
+    QVERIFY(widget);
+    delete widget;
+}

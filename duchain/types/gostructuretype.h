@@ -94,19 +94,4 @@ protected:
 
 }
 
-namespace KDevelop
-{
-
-template<>
-inline go::GoStructureType* fastCast<go::GoStructureType*>(AbstractType* from) {
-    if ( !from || from->whichType() != AbstractType::TypeAbstract ) {
-        return 0;
-    } else {
-        return dynamic_cast<go::GoStructureType*>(from);
-    }
-}
-
-}
-
-
 #endif

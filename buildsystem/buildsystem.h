@@ -21,7 +21,7 @@ class GoBuildSystem : public KDevelop::AbstractFileManagerPlugin,
     Q_INTERFACES( KDevelop::IBuildSystemManager )
 public:
 
-    GoBuildSystem(QObject* parent = nullptr, const QVariantList& args = QVariantList());
+    GoBuildSystem(QObject* parent, const KPluginMetaData& metaData, const QVariantList& args = QVariantList());
 
     ~GoBuildSystem() override;
 

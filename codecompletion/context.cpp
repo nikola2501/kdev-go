@@ -18,6 +18,7 @@
 
 //Completion code is mostly based on KDevelop QmlJS plugin which should be referenced for more details amd comments
 
+#include <QRegularExpression>
 #include "context.h"
 
 #include <language/codecompletion/normaldeclarationcompletionitem.h>
@@ -76,7 +77,7 @@ QList< CompletionTreeItemPointer > CodeCompletionContext::completionItems(bool& 
         m_text = m_text.mid(m_text.lastIndexOf(';'));
 
     //"import" + [optional package alias] + [opening double quote] + [cursor at EOL]
-    if(m_text.contains(QRegExp("import[^\"]*\"[^\"]*$")))
+    if(m_text.contains(QRegularExpression("import[^\"]*\"[^\"]*$")))
     {
         items << importCompletion();
         return items;
@@ -121,7 +122,7 @@ QList< CompletionTreeItemPointer > CodeCompletionContext::functionCallTips()
         if (entry.startPosition > 0 && m_text.at(entry.startPosition - 1) == QLatin1Char('('))
         {
             DeclarationPointer function = lastDeclaration(m_text.left(entry.startPosition - 1));
-            if(function && fastCast<go::GoFunctionType*>(function->abstractType().constData()))
+            if(function && dynamic_cast<go::GoFunctionType*>(function->abstractType().data()))
             {
                 FunctionCompletionItem* item = new FunctionCompletionItem(function, depth, entry.commas);
                 depth++;
@@ -129,7 +130,7 @@ QList< CompletionTreeItemPointer > CodeCompletionContext::functionCallTips()
 
                 if(isTopOfStack && !m_typeMatch.singleType())
                 {
-                    GoFunctionType::Ptr ftype(fastCast<GoFunctionType*>(function->abstractType().constData()));
+                    GoFunctionType::Ptr ftype(dynamic_cast<GoFunctionType*>(function->abstractType().data()));
                     auto args = ftype->arguments();
                     if(args.count() != 0)
                     {
@@ -161,11 +162,11 @@ void CodeCompletionContext::setTypeToMatch()
             auto declEntry = stack.pop();
             auto declText = m_text.mid(declEntry.startPosition, entry.startPosition - 1 - declEntry.startPosition);
             auto type = lastType(declText);
-            if(fastCast<ArrayType*>(type.data()))
+            if(dynamic_cast<ArrayType*>(type.data()))
             {
                 m_typeMatch.setSingleType(GoIntegralType::Ptr(new GoIntegralType(GoIntegralType::TypeInt)));
             }
-            else if(auto map = fastCast<GoMapType*>(type.data()))
+            else if(auto map = dynamic_cast<GoMapType*>(type.data()))
             {
                 auto keyType = map->keyType();
                 m_typeMatch.setSingleType(map->keyType());
@@ -207,7 +208,7 @@ void CodeCompletionContext::setTypeToMatch()
         auto leftText = m_text.left(entry.operatorStart);
         if(auto type = lastType(leftText))
         {
-            if(auto channelType = fastCast<GoChanType*>(type.data()))
+            if(auto channelType = dynamic_cast<GoChanType*>(type.data()))
             {
                 if(channelType->valueType())
                 {
@@ -269,7 +270,7 @@ QList< CompletionTreeItemPointer > CodeCompletionContext::importAndMemberComplet
 
     if(type)
     {
-        if(auto ptype = fastCast<PointerType*>(type.constData()))
+        if(auto ptype = dynamic_cast<PointerType*>(type.data()))
         {
             DUChainReadLocker lock;
             if(ptype->baseType())
@@ -277,7 +278,7 @@ QList< CompletionTreeItemPointer > CodeCompletionContext::importAndMemberComplet
                 type = ptype->baseType();
             }
         }
-        if(auto structure = fastCast<StructureType*>(type.constData()))
+        if(auto structure = dynamic_cast<StructureType*>(type.data()))
         {
             DUChainReadLocker lock;
             Declaration* declaration = structure->declaration(m_duContext->topContext());
@@ -309,7 +310,7 @@ QList<CompletionTreeItemPointer> CodeCompletionContext::importCompletion()
     QString fullPath = m_text.mid(m_text.lastIndexOf('"')+1);
 
     //import "parentPackage/childPackage"
-    QStringList pathChain = fullPath.split('/', QString::SkipEmptyParts);
+    QStringList pathChain = fullPath.split('/', Qt::SkipEmptyParts);
     qCDebug(COMPLETION) << pathChain;
     for(const QString& path : searchPaths)
     {

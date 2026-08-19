@@ -17,7 +17,7 @@ using namespace KDevelop;
 GoBuildJob::GoBuildJob(QObject* parent, QString command, QUrl buildDir, QString resultDir) : OutputExecuteJob(parent), m_command(command), m_output(resultDir)
 {
     setStandardToolView(IOutputView::BuildView);
-    setFilteringStrategy(new CompilerFilterStrategy(buildDir.toString()));
+    setFilteringStrategy(new CompilerFilterStrategy(buildDir));
     setWorkingDirectory(buildDir);
     setProperties(KDevelop::OutputExecuteJob::NeedWorkingDirectory | KDevelop::OutputExecuteJob::DisplayStderr | KDevelop::OutputExecuteJob::IsBuilderHint);
 }

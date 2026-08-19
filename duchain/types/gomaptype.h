@@ -95,19 +95,4 @@ protected:
 
 }
 
-namespace KDevelop
-{
-
-template<>
-inline go::GoMapType* fastCast<go::GoMapType*>(AbstractType* from) {
-    if ( !from || from->whichType() != AbstractType::TypeAbstract ) {
-        return 0;
-    } else {
-        return dynamic_cast<go::GoMapType*>(from);
-    }
-}
-
-}
-
-
 #endif

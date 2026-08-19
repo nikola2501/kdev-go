@@ -43,7 +43,7 @@ class GoPlugin : public KDevelop::IPlugin, public KDevelop::ILanguageSupport
     Q_OBJECT
     Q_INTERFACES( KDevelop::ILanguageSupport )
   public:
-    explicit GoPlugin(QObject* parent, const QVariantList &args);
+    explicit GoPlugin(QObject* parent, const KPluginMetaData& metaData, const QVariantList& args);
     
     ~GoPlugin() override;
     

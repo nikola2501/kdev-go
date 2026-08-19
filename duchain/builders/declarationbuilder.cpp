@@ -179,7 +179,7 @@ void DeclarationBuilder::declareVariable(go::IdentifierAst* id, const AbstractTy
         }
         DUChainWriteLocker lock;
         Declaration* dec = openDeclaration<Declaration>(identifierForNode(id), editorFindRange(id, 0));
-        dec->setType<AbstractType>(type);
+        dec->setType(type);
         dec->setKind(Declaration::Instance);
         closeDeclaration();
     }
@@ -291,7 +291,7 @@ void DeclarationBuilder::visitMethodDeclaration(go::MethodDeclarationAst* node)
     openContext(node, editorFindRange(node, 0), DUContext::ContextType::Class, typeIdentifier);
     DUChainWriteLocker lock;
     auto functionDefinition = buildMethod(node->signature, node->body, node->methodName, functionDeclaration, m_session->commentBeforeToken(node->startToken-1), identifier);
-    functionDeclaration->setType<go::GoFunctionType>(functionDefinition->type<go::GoFunctionType>());
+    functionDeclaration->setType(functionDefinition->type<go::GoFunctionType>());
     functionDeclaration->setKind(Declaration::Instance);
     lock.unlock();
 
@@ -341,7 +341,7 @@ void DeclarationBuilder::visitTypeSpec(go::TypeSpecAst* node)
     DUChainWriteLocker lock;
     //qCDebug(DUCHAIN) << lastType()->toString();
     decl->setType(lastType());
-    auto structType = fastCast<StructureType*>(lastType().data());
+    auto structType = dynamic_cast<StructureType*>(lastType().data());
     if(structType)
     {
         structType->setDeclaration(decl);
@@ -362,7 +362,7 @@ void DeclarationBuilder::visitTypeSpec(go::TypeSpecAst* node)
             {
                 visitTypeName(anonymousField->typeName);
 
-                StructureType::Ptr baseClassType = lastType().cast<StructureType>();
+                StructureType::Ptr baseClassType = lastType().dynamicCast<StructureType>();
                 if(baseClassType)
                 {
                     auto baseClassDeclaration = baseClassType->declaration(topContext());
@@ -377,7 +377,7 @@ void DeclarationBuilder::visitTypeSpec(go::TypeSpecAst* node)
             {
                 buildTypeName(varId);
 
-                StructureType::Ptr baseClassType = lastType().cast<StructureType>();
+                StructureType::Ptr baseClassType = lastType().dynamicCast<StructureType>();
                 if(baseClassType)
                 {
                     auto baseClassDeclaration = baseClassType->declaration(topContext());
@@ -650,7 +650,7 @@ go::GoFunctionDeclaration* DeclarationBuilder::declareFunction(go::IdentifierAst
     setComment(comment);
     DUChainWriteLocker lock;
     auto dec = openDefinition<go::GoFunctionDeclaration>(identifierForNode(id), editorFindRange(id, 0));
-    dec->setType<go::GoFunctionType>(type);
+    dec->setType(type);
     dec->setKind(Declaration::Instance);
     dec->setInternalContext(bodyContext);
 
@@ -682,7 +682,7 @@ go::GoFunctionDefinition* DeclarationBuilder::declareMethod(go::IdentifierAst *i
     setComment(comment);
     DUChainWriteLocker lock;
     auto dec = openDefinition<go::GoFunctionDefinition>(identifier, editorFindRange(id, 0));
-    dec->setType<go::GoFunctionType>(type);
+    dec->setType(type);
     dec->setKind(Declaration::Instance);
     dec->setInternalContext(bodyContext);
 

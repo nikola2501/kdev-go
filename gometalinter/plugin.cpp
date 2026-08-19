@@ -21,8 +21,8 @@
 #include <project/projectmodel.h>
 #include <util/jobstatus.h>
 
-#include <KCoreAddons/KPluginFactory>
-#include <KI18n/KLocalizedString>
+#include <KPluginFactory>
+#include <KLocalizedString>
 #include <kactioncollection.h>
 #include <QtCore/QMimeDatabase>
 
@@ -31,8 +31,8 @@ K_PLUGIN_FACTORY_WITH_JSON(GoMetaLinterFactory, "gometalinter.json", registerPlu
 namespace GoMetaLinter
 {
 
-Plugin::Plugin(QObject *parent, const QVariantList&)
-    : IPlugin(QStringLiteral("gometalinter"), parent),
+Plugin::Plugin(QObject* parent, const KPluginMetaData& metaData, const QVariantList&)
+    : IPlugin(QStringLiteral("gometalinter"), parent, metaData),
       m_currentProject(nullptr),
       m_model(new ProblemModel(this)),
       m_job(nullptr)

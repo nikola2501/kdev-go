@@ -97,18 +97,4 @@ protected:
 
 }
 
-namespace KDevelop
-{
-
-template<>
-inline go::GoFunctionType* fastCast<go::GoFunctionType*>(AbstractType* from) {
-    if ( !from || from->whichType() != AbstractType::TypeFunction ) {
-        return 0;
-    } else {
-        return dynamic_cast<go::GoFunctionType*>(from);
-    }
-}
-
-}
-
 #endif

@@ -32,7 +32,7 @@ int main(int argc, char** argv)
         return 1;
     }
     QTextStream in(&file);
-    in.setCodec("UTF-8");
+    in.setEncoding(QStringConverter::Utf8);
     QByteArray code = in.readAll().toUtf8();
     ParseSession session(code, 1);
     bool result=session.startParsing();
