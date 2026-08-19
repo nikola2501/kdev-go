@@ -148,6 +148,22 @@ void ContextBuilder::visitTopLevelDeclaration(go::TopLevelDeclarationAst* node)
     go::DefaultVisitor::visitTopLevelDeclaration(node);
 }
 
+bool ContextBuilder::shouldOpenLiteralContext(const KDevelop::QualifiedIdentifier& id)
+{
+    if(compilingContexts())
+        return true;
+    DUChainReadLocker lock;
+    const auto indexedIdentifier = IndexedQualifiedIdentifier(id);
+    const auto childContexts = currentContext()->childContexts();
+    for(int i = nextContextIndex(); i < childContexts.size(); ++i)
+    {
+        if(childContexts.at(i)->type() == DUContext::Other
+            && childContexts.at(i)->indexedLocalScopeIdentifier() == indexedIdentifier)
+            return true;
+    }
+    return false;
+}
+
 void ContextBuilder::visitPrimaryExpr(go::PrimaryExprAst *node)
 {
     if(node->id) {
@@ -157,7 +173,8 @@ void ContextBuilder::visitPrimaryExpr(go::PrimaryExprAst *node)
         {
             declaration = go::getDeclaration(id, currentContext());
         }
-        if (declaration && (node->literalValue) && declaration->kind() == Declaration::Type)
+        if (declaration && (node->literalValue) && declaration->kind() == Declaration::Type
+            && shouldOpenLiteralContext(id))
         {
             if (node->literalValue)
             {
@@ -183,7 +200,8 @@ void ContextBuilder::visitPrimaryExpr(go::PrimaryExprAst *node)
                     {
                         declaration = go::getDeclaration(id, currentContext());
                     }
-                    if(declaration && declaration->kind() == Declaration::Type)
+                    if(declaration && declaration->kind() == Declaration::Type
+                        && shouldOpenLiteralContext(id))
                     {
                         openContext(node->id, editorFindRange(primaryExprResolveNode->literalValue, 0), DUContext::Other, id);
                         visitPrimaryExprResolve(node->primaryExprResolve);
