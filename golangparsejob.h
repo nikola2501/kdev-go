@@ -37,6 +37,7 @@ private:
      * Canonical imports paths should be available before any other parsing
      * can begin, so it must be fast.
      **/
+    bool hasBuiltinsImport();
     void parseCanonicalImports();
 
     /**

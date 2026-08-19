@@ -54,7 +54,10 @@ void GoParseJob::run(ThreadWeaver::JobPointer self, ThreadWeaver::Thread *thread
 
    UrlParseLock urlLock(document());
 
-    if (abortRequested() || !isUpdateRequired(ParseSession::languageString())) {
+    if (abortRequested()) {
+        return;
+    }
+    if (!isUpdateRequired(ParseSession::languageString()) && hasBuiltinsImport()) {
         return;
     }
 
@@ -159,6 +162,31 @@ void GoParseJob::run(ThreadWeaver::JobPointer self, ThreadWeaver::Thread *thread
       qCDebug(Go) << "===Success===" << document().str();
     else
       qCDebug(Go) << "===Failed===" << document().str();
+}
+
+bool GoParseJob::hasBuiltinsImport()
+{
+    //a context cached while builtins.go could not be found (e.g. wrong XDG_DATA_DIRS)
+    //has no builtins import and never resolves builtin types; once builtins are
+    //available again such a cache must not short-circuit the reparse
+    QString builtinFile = go::Helper::getBuiltinFile();
+    if(builtinFile.isEmpty() || IndexedString(builtinFile) == document())
+        return true;
+
+    DUChainReadLocker lock;
+    TopDUContext* context = DUChainUtils::standardContextForUrl(document().toUrl());
+    if(!context)
+        return true;
+
+    const IndexedString builtinUrl(builtinFile);
+    const auto imports = context->importedParentContexts();
+    for(const auto& import : imports)
+    {
+        DUContext* imported = import.context(context);
+        if(imported && imported->url() == builtinUrl)
+            return true;
+    }
+    return false;
 }
 
 void GoParseJob::parseCanonicalImports()
