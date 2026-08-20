@@ -22,7 +22,7 @@ da IDE radi sa Go kodom. Stanje: avgust 2026.
 | Hardver | Apple Silicon (M1–M4), ~40 GB slobodnog prostora |
 | OS | macOS 13+ |
 | Alati | Xcode Command Line Tools, Python ≥ 3.9, Go (za sam rad, i da `go env` radi) |
-| Vreme | 2–5 h mašinskog builda; realno 1–2 dana ako neki blueprint pukne |
+| Vreme | sa Craft binarnim kešom: sati (download + build KDevelopa); bez keša: znatno duže |
 
 ```sh
 xcode-select --install
@@ -53,9 +53,13 @@ source ~/CraftRoot/craft/craftenv.sh    # postavlja PATH, $KDEROOT itd.
 craft kdevelop
 ```
 
-Ovo rekurzivno builduje Qt6, sve KF6 frameworke, LLVM/libclang,
-kdevelop-pg-qt i KDevelop. Prvi build traje satima; sve posle je
-inkrementalno. Pokretanje:
+**Ne paniči zbog obima:** Craft ima binarni keš (podrazumevano uključen,
+`UseCache=True` u `CraftSettings.ini`) — Qt6, KF6 frameworke, LLVM i
+QtWebEngine za macOS arm64 po pravilu **skida gotove** sa KDE servera,
+ne kompajlira ih. Iz sorsa se builduje samo ono čega u kešu nema —
+tipično sam KDevelop i pokoja sitnica. Realno: nekoliko GB downloada +
+20-60 min kompajliranja; višesatni build je scenario praznog keša.
+Pokretanje:
 
 ```sh
 craft --run kdevelop
