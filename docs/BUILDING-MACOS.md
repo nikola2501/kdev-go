@@ -33,6 +33,17 @@ brew install go        # ili sa go.dev; treba i pluginu (go env GOROOT/GOMODCACH
 > **Važno:** builduj iz čistog shella. Ako je Homebrew/MacPorts Qt u `PATH`-u,
 > CMake ume da pokupi pogrešan Qt.
 
+### Službeni laptop / bezbedno uklanjanje
+
+Craft ne dira sistem: sve živi u `~/CraftRoot` (bez sudo-a, bez upisa u
+`/usr` ili `/Library`, bez daemon-a), i ne menja shell — okruženje postoji
+samo u terminalu gde ručno pokreneš `craftenv.sh`. Go možeš umesto brew-a
+raspakovati iz tarball-a sa go.dev u home. Deinstalacija:
+`rm -rf ~/CraftRoot` + KDevelop-ovi user config direktorijumi u
+`~/Library/Application Support` — sistem ostaje netaknut. Jedini realni
+troškovi: 20–40 GB diska, i eventualno trvenje sa korporativnim
+EDR-om/proxy-jem pri velikom buildu i downloadu.
+
 ## 1. Craft bootstrap
 
 ```sh
