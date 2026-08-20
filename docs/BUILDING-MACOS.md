@@ -141,14 +141,17 @@ pogledaj `KDEVPLATFORM_TESTS_PREFIX` opciju u korenskom `CMakeLists.txt`.
 | Oblast | Stanje | Zamena |
 |---|---|---|
 | Konsole tool view | Ne postoji (nema KonsolePart) | Terminal.app / iTerm |
-| gdb debugger | Mrtav na Apple Siliconu | KDevelop **lldb** plugin |
+| gdb debugger | Mrtav na Apple Siliconu | za Go: naš **Delve** plugin (dlv radi na arm64 macu); za C/C++: lldb plugin |
 | Plasma/KRunner | CMake ih sam preskače | — |
 | Gatekeeper | Blokira nepotpisan `.app` iz `.dmg` | `xattr -dr com.apple.quarantine kdevelop.app` |
 | Sitni UI kvarovi | Port bez održavaoca | Zapisuj; kandidati za upstream |
 
-## Poznata ograničenja plugina (sve platforme)
+## Stanje plugina (sve platforme)
 
-- Gramatika ne zna Go 1.18+ sintaksu (generici pre svega) — takvi fajlovi se
-  preskaču pri parsiranju (~9% tipičnog vendor stabla).
-- `gometalinter` plugin cilja odavno mrtav alat (zameniti golangci-lint-om).
-- `gobuildsystem` je iz GOPATH ere.
+Grana `qt6-port` danas nosi: modernu gramatiku (generici, Go 1.13+ literali;
+ceo stdlib parsira bez greške), Go module + vendor + module-cache rezoluciju,
+IDE semantiku generika, golangci-lint integraciju, Delve debugger (DAP) i
+modul-svesni build sistem (`go build/test ./...`). Preostala poznata
+ograničenja: nema supstitucije type parametara na mestu instanciranja
+(`l.items` na `List[int]` je tipa `T[]`, ne `int[]`), i run-to-cursor/restart
+u debuggeru nisu implementirani.
